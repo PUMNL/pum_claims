@@ -1,0 +1,90 @@
+<?php
+
+function pum_claims_menu() {
+    $items = array();
+    $items['portal/new-claim'] = array(
+        'title' => 'Submit a new claim',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('pum_claims_form'),
+        'access callback' => 'pum_claims_user_has_role',
+        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+    );
+    return $items;
+}
+
+function pum_claims_form($form, &$form_state) {
+    global $user;
+    civicrm_initialize();
+    $contact_id = civicrm_api3('UFMatch', 'getvalue', array(
+        'uf_id' => $user->uid,
+        'return' => 'contact_id'
+    ));
+    $contact = civicrm_api3('Contact', 'getsingle', array('id' => $contact_id));
+
+    $strBirthDate = '';
+    if (!empty($contact['birth_date'])) {
+        $dateBirthDate = new DateTime($contact['birth_date']);
+        $strBirthDate = $dateBirthDate->format('Y-m-d');
+    }
+
+    $attachmentRows = array();
+
+
+    $form['about_me']['#type'] = 'fieldset';
+    $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
+    $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
+    $form['about_me']['bank_name']['#type'] = 'textfield';
+    $form['about_me']['bank_name']['#title'] = 'Bank name';
+    $form['about_me']['bic']['#type'] = 'textfield';
+    $form['about_me']['bic']['#title'] = 'BIC';
+    $form['about_me']['bic']['#attributes']['class'][] = 'small';
+    $form['about_me']['iban']['#type'] = 'textfield';
+    $form['about_me']['iban']['#title'] = 'IBAN';
+    $form['about_me']['desciption']['#type'] = 'textfield';
+    $form['about_me']['desciption']['#title'] = 'Description';
+
+    $form['attachments']['#type'] = 'fieldset';
+    $form['attachments']['#title'] = 'My attachments (invoices, train tickets etc.)';
+    $form['attachments']['upload']['#prefix'] = '<div class="upload">';
+    $form['attachments']['upload']['#suffix'] = '</div>';
+    $form['attachments']['upload']['explanation']['#markup'] = '<p class="description">Please upload one or more attachments</p>';
+    $form['attachments']['upload']['file']['#title'] = t('File');
+    $form['attachments']['upload']['file']['#type'] = 'file';
+    $form['attachments']['upload']['button']['#type'] = 'submit';
+    $form['attachments']['upload']['button']['#value'] = 'Upload';
+    $form['attachments']['upload']['button']['#submit'] = array('pum_claims_form_submit_attachments');
+
+    if (count($attachmentRows)) {
+        $form['attachments']['table']['#theme'] = 'table';
+        $form['attachments']['table']['#rows'] = $attachmentRows;
+        $form['attachments']['table']['#attributes'] = array('width' => '100%');
+    }
+
+    $form['submit_button'] = array(
+        '#type' => 'submit',
+        '#value' => t('Save and submit expense form'),
+    );
+
+
+    return $form;
+}
+
+/**
+ * Check whether a drupal user has a certain role.
+ *
+ * @param array $roles
+ * @return bool
+ */
+function pum_claims_user_has_role($roles = array())
+{
+    global $user;
+    if (in_array('administrator', $user->roles)) {
+        return true;
+    }
+    foreach ($roles as $role) {
+        if (in_array($role, $user->roles)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
