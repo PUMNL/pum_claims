@@ -28,6 +28,7 @@ $handler->display->display_options['style_plugin'] = 'table';
 $handler->display->display_options['header']['area']['id'] = 'area';
 $handler->display->display_options['header']['area']['table'] = 'views';
 $handler->display->display_options['header']['area']['field'] = 'area';
+$handler->display->display_options['header']['area']['empty'] = TRUE;
 $handler->display->display_options['header']['area']['content'] = '<p><a href="/portal/new-claim" class="button">Submit a new claim</a></p>';
 $handler->display->display_options['header']['area']['format'] = 'filtered_html';
 /* Relationship: CiviCRM Activity Contacts: Activity Contact ID */
