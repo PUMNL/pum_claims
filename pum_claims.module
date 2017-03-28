@@ -23,6 +23,20 @@ function pum_claims_menu() {
         'access callback' => 'pum_claims_user_has_role',
         'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
     );
+    $items['portal/edit-claim/%/edit-line/%'] = array(
+        'title' => 'Edit a claim line',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('pum_claims_line_form', 2, 4),
+        'access callback' => 'pum_claims_user_has_role',
+        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+    );
+    $items['portal/edit-claim/%/remove-line/%'] = array(
+        'title' => 'Submit a new claim line',
+        'page callback' => 'pum_claims_remove_line',
+        'page arguments' => array(2, 4),
+        'access callback' => 'pum_claims_user_has_role',
+        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+    );
     return $items;
 }
 
@@ -116,7 +130,7 @@ function pum_claims_form_submit($form, &$form_state) {
     $params['claim_contact_id'] = $contact_id;
     $params['claim_link'] = $form_state['values']['link'];
     $params['claim_total_amount'] = 0;
-    $params['description'] = $form_state['values']['description'];
+    $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
     $claim_id = $result['values']['id'];
     drupal_goto('portal/edit-claim/'.$claim_id);
@@ -130,12 +144,17 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         'return' => 'contact_id'
     ));
 
+    $claim = civicrm_api3('Claim', 'getsingle', array('id' => $claim_id));
+
     // @Todo retrievie current attachments
     $attachmentRows = array();
     // @Todo retrieve the linked lineItem.
     $lines = _pum_claims_getClaimLines($claim_id);
     $lineitemRows = array();
     foreach($lines as $line) {
+        $editLink = '<a href="'.url('portal/edit-claim/'.$claim_id.'/edit-line/'.$line['id']).'">Edit</a>';
+        $removeLink = '<a href="'.url('portal/edit-claim/'.$claim_id.'/remove-line/'.$line['id']).'">Remove</a>';
+
         $lineitemRow = array();
         $lineitemRow[] = $line['expense_date'];
         $lineitemRow[] = $line['expense_type'];
@@ -143,7 +162,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         $lineitemRow[] = $line['currency_amount'];
         $lineitemRow[] = $line['euro_amount'];
         $lineitemRow[] = $line['description'];
-        $lineitemRow[] = 'Edit link and remove link';
+        $lineitemRow[] = $editLink.'&nbsp;'.$removeLink;
         $lineitemRows[] = $lineitemRow;
     }
 
@@ -183,14 +202,17 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim type';
     $form['about_me']['type']['#required'] = true;
+    $form['about_me']['type']['#default_value'] = $claim['claim_type_id'];
     $form['about_me']['type']['#options'] = $claim_types;
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Link';
     $form['about_me']['link']['#required'] = true;
+    $form['about_me']['link']['#default_value'] = $claim['claim_linked_to'];
     $form['about_me']['link']['#options'] = $link_options;
     $form['about_me']['description']['#type'] = 'textfield';
     $form['about_me']['description']['#title'] = 'Description';
     $form['about_me']['description']['#required'] = true;
+    $form['about_me']['description']['#default_value'] = $claim['claim_description'];
 
     $form['lines']['#type'] = 'fieldset';
     $form['lines']['#title'] = 'My expenses';
@@ -261,15 +283,30 @@ function pum_claims_edit_form_submit($form, &$form_state) {
     drupal_goto('portal/edit-claim/'.$claim_id);
 }
 
-function pum_claims_line_form($form, &$form_state, $claim_id) {
+function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
 
     civicrm_initialize();
 
     $line_types = _pum_claims_getClaimLineTypes();
     $currencies = _pum_claims_get_civicrm_currencies();
 
+    $line = array();
+    $line['expense_date'] = '';
+    $line['currency_id'] = '';
+    $line['currency_amount'] = '';
+    $line['euro_amount'] = '0.00';
+    $line['description'] = '';
+    if ($line_id) {
+        $line = civicrm_api3('ClaimLine', 'getsingle', array('id' => $line_id));
+        $expenseDate = new DateTime($line['expense_date']);
+        $line['expense_date'] = $expenseDate->format('Y-m-d');
+    }
+
     $form['claim_id']['#type'] = 'hidden';
     $form['claim_id']['#value'] = $claim_id;
+
+    $form['line_id']['#type'] = 'hidden';
+    $form['line_id']['#value'] = $line_id;
 
     $form['line']['#type'] = 'fieldset';
     $form['line']['expense_date']['#type'] = 'date_popup';
@@ -279,6 +316,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id) {
     $form['line']['expense_date']['#date_format'] = 'Y-m-d';
     $form['line']['expense_date']['#date_increment'] = 1;
     $form['line']['expense_date']['#date_year_range'] = '-2:+2';
+    $form['line']['expense_date']['#default_value'] = $line['expense_date'];
 
     $form['line']['type']['#type'] = 'select';
     $form['line']['type']['#title'] = 'Claim type';
@@ -289,16 +327,19 @@ function pum_claims_line_form($form, &$form_state, $claim_id) {
     $form['line']['currency']['#title'] = 'Currency';
     $form['line']['currency']['#required'] = true;
     $form['line']['currency']['#options'] = $currencies;
+    $form['line']['currency']['#default_value'] = $line['currency_id'];
 
     $form['line']['amount']['#type'] = 'textfield';
     $form['line']['amount']['#title'] = 'Amount (in currency)'; // @todo validation for right fornmat
     $form['line']['amount']['#required'] = true;
+    $form['line']['amount']['#default_value'] = $line['currency_amount'];
 
-    $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: 0,00</p>';
+    $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: '.$line['euro_amount'].'</p>';
 
     $form['line']['description']['#type'] = 'textfield';
     $form['line']['description']['#title'] = 'Description';
     $form['line']['description']['#required'] = true;
+    $form['line']['description']['#default_value'] = $line['description'];
 
     $form['line']['attachment']['#type'] = 'file';
     $form['line']['attachment']['#title'] = 'Attachment';
@@ -313,8 +354,13 @@ function pum_claims_line_form($form, &$form_state, $claim_id) {
 }
 
 function pum_claims_line_form_submit($form, &$form_state) {
+    $line_id = $form_state['values']['line_id'];
     $claim_id = $form_state['values']['claim_id'];
     $expenseDate = new DateTime($form_state['values']['expense_date']);
+    $params = array();
+    if ($line_id) {
+        $params['id'] = $line_id;
+    }
     $params['activity_id'] = $claim_id;
     $params['expense_date'] = $expenseDate->format('Ymd');
     $params['currency_id'] = $form_state['values']['currency'];
@@ -323,6 +369,11 @@ function pum_claims_line_form_submit($form, &$form_state) {
     $params['description'] = $form_state['values']['description'];
     //@Todo do something with the attachment
     civicrm_api3('ClaimLine', 'create', $params);
+    drupal_goto('portal/edit-claim/'.$claim_id);
+}
+
+function pum_claims_remove_line($claim_id, $line_id) {
+    $result = civicrm_api3('ClaimLine', 'Delete', array('id' => $line_id));
     drupal_goto('portal/edit-claim/'.$claim_id);
 }
 
@@ -397,18 +448,20 @@ function _pum_claims_getClaimTypes() {
  * @return array
  */
 function _pum_claims_getClaimLinksForContact($contact_id) {
-   $sql = "SELECT `case`.`id`, `case`.`subject` 
+    $travelCaseType = civicrm_api3('OptionValue', 'getvalue', array('return' => 'value', 'name' => 'TravelCase', 'option_group_id' => 'case_type'));
+    $sql = "SELECT `case`.`id`, `case`.`subject` 
           FROM `civicrm_relationship` `relationship`
           INNER JOIN `civicrm_case` `case` ON `case`.`id` = `relationship`.`case_id`
-          WHERE (`relationship`.`contact_id_a` = %1 OR `relationship`.`contact_id_b` = %1) 
+          WHERE (`relationship`.`contact_id_a` = %1 OR `relationship`.`contact_id_b` = %1) AND `case`.`case_type_id` NOT LIKE %2 
           ";
-   $params[1] = array($contact_id, 'Integer');
-   $dao = CRM_Core_DAO::executeQuery($sql, $params);
-   $return = array();
-   while($dao->fetch()) {
-       $return[$dao->id] = $dao->subject.' (Case: '.$dao->id.')';
-   }
-   return $return;
+    $params[1] = array($contact_id, 'Integer');
+    $params[2] = array('%'.CRM_Core_DAO::VALUE_SEPARATOR.$travelCaseType.CRM_Core_DAO::VALUE_SEPARATOR.'%', 'String');
+    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+    $return = array();
+    while($dao->fetch()) {
+        $return[$dao->id] = $dao->subject.' (Case: '.$dao->id.')';
+    }
+    return $return;
 }
 
 /**
