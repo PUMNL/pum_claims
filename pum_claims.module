@@ -1,5 +1,9 @@
 <?php
 
+function pum_claims_get_roles_who_can_access() {
+    return array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative');
+}
+
 function pum_claims_menu() {
     $items = array();
     $items['portal/new-claim'] = array(
@@ -7,35 +11,42 @@ function pum_claims_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_form'),
         'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+        'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
     $items['portal/edit-claim/%'] = array(
-        'title' => 'Submit a new claim',
+        'title' => 'Edit claim',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_edit_form', 2),
         'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+        'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
     $items['portal/edit-claim/%/add-line'] = array(
         'title' => 'Submit a new claim line',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_line_form', 2),
         'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+        'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
     $items['portal/edit-claim/%/edit-line/%'] = array(
         'title' => 'Edit a claim line',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_line_form', 2, 4),
         'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+        'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
     $items['portal/edit-claim/%/remove-line/%'] = array(
         'title' => 'Submit a new claim line',
         'page callback' => 'pum_claims_remove_line',
         'page arguments' => array(2, 4),
         'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative')),
+        'access arguments' => array(pum_claims_get_roles_who_can_access()),
+    );
+    $items['portal/edit-claim/convert_currency'] = array(
+        'title' => 'Convert currency',
+        'page callback' => 'pum_claims_convert_currency',
+        'page arguments' => array(),
+        'access callback' => 'pum_claims_user_has_role',
+        'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
     return $items;
 }
@@ -55,6 +66,15 @@ function pum_claims_views_default_views() {
         }
     }
     return $views;
+}
+
+function pum_claims_convert_currency() {
+    $currency_id = (int) $_GET['currency_id'];
+    $amount = (float) $_GET['amount'];
+    civicrm_initialize();
+    $result = civicrm_api3('Currency', 'Convert', array('currency_id' => $currency_id, 'amount' => $amount));
+    echo number_format($result['euro_amount'], 2, ',', '.');
+    exit();
 }
 
 function pum_claims_form($form, &$form_state) {
@@ -151,6 +171,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     // @Todo retrieve the linked lineItem.
     $lines = _pum_claims_getClaimLines($claim_id);
     $lineitemRows = array();
+    $totalAmount = 0.00;
     foreach($lines as $line) {
         $editLink = '<a href="'.url('portal/edit-claim/'.$claim_id.'/edit-line/'.$line['id']).'">Edit</a>';
         $removeLink = '<a href="'.url('portal/edit-claim/'.$claim_id.'/remove-line/'.$line['id']).'">Remove</a>';
@@ -164,6 +185,8 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         $lineitemRow[] = $line['description'];
         $lineitemRow[] = $editLink.'&nbsp;'.$removeLink;
         $lineitemRows[] = $lineitemRow;
+
+        $totalAmount = $totalAmount + ((float) $line['euro_amount']);
     }
 
 
@@ -232,6 +255,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         );
         $form['lines']['table']['#attributes'] = array('width' => '100%');
         $form['lines']['table']['#rows'] = $lineitemRows;
+        $form['lines']['total']['#markup'] = '<strong>Total: </strong>EUR '.number_format($totalAmount, 2, ',', '.');
     }
 
     $form['attachments']['#type'] = 'fieldset';
@@ -253,7 +277,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
 
     $form['submit_button'] = array(
         '#type' => 'submit',
-        '#value' => t('Save and submit expense form'),
+        '#value' => t('Save'),
     );
 
 
@@ -277,13 +301,15 @@ function pum_claims_edit_form_submit($form, &$form_state) {
     $params['claim_contact_id'] = $contact_id;
     $params['claim_link'] = $form_state['values']['link'];
     $params['claim_total_amount'] = 0;
-    $params['description'] = $form_state['values']['description'];
+    $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
     $claim_id = $result['values']['id'];
     drupal_goto('portal/edit-claim/'.$claim_id);
 }
 
 function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
+    drupal_add_js(array('pum_claims' => array('currencyConvertUrl' => url('portal/edit-claim/convert_currency'))), 'setting');
+    drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
 
     civicrm_initialize();
 
@@ -292,10 +318,11 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
 
     $line = array();
     $line['expense_date'] = '';
-    $line['currency_id'] = '';
+    $line['currency_id'] = null;
     $line['currency_amount'] = '';
     $line['euro_amount'] = '0.00';
     $line['description'] = '';
+    $line['expense_type'] = null;
     if ($line_id) {
         $line = civicrm_api3('ClaimLine', 'getsingle', array('id' => $line_id));
         $expenseDate = new DateTime($line['expense_date']);
@@ -322,6 +349,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['type']['#title'] = 'Claim type';
     $form['line']['type']['#required'] = true;
     $form['line']['type']['#options'] = $line_types;
+    $form['line']['type']['#default_value'] = $line['expense_type'];
 
     $form['line']['currency']['#type'] = 'select';
     $form['line']['currency']['#title'] = 'Currency';
@@ -334,16 +362,12 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['amount']['#required'] = true;
     $form['line']['amount']['#default_value'] = $line['currency_amount'];
 
-    $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: '.$line['euro_amount'].'</p>';
+    $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: <span id="euro-amount">'.$line['euro_amount'].'</span></p>';
 
     $form['line']['description']['#type'] = 'textfield';
     $form['line']['description']['#title'] = 'Description';
     $form['line']['description']['#required'] = true;
     $form['line']['description']['#default_value'] = $line['description'];
-
-    $form['line']['attachment']['#type'] = 'file';
-    $form['line']['attachment']['#title'] = 'Attachment';
-    $form['line']['attachment']['#required'] = false;
 
     $form['submit_button'] = array(
         '#type' => 'submit',
@@ -361,18 +385,25 @@ function pum_claims_line_form_submit($form, &$form_state) {
     if ($line_id) {
         $params['id'] = $line_id;
     }
+
+    $result = civicrm_api3('Currency', 'Convert', array(
+        'currency_id' => $form_state['values']['currency'],
+        'amount' => $form_state['values']['amount']
+    ));
+
     $params['activity_id'] = $claim_id;
     $params['expense_date'] = $expenseDate->format('Ymd');
     $params['currency_id'] = $form_state['values']['currency'];
     $params['currency_amount'] = $form_state['values']['amount'];
-    $params['euro_amount'] = $form_state['values']['amount']; // @Todo convert the currency amount to the actual value
+    $params['euro_amount'] = $result['euro_amount'];
     $params['description'] = $form_state['values']['description'];
-    //@Todo do something with the attachment
+    $params['expense_type'] = $form_state['values']['type'];
     civicrm_api3('ClaimLine', 'create', $params);
     drupal_goto('portal/edit-claim/'.$claim_id);
 }
 
 function pum_claims_remove_line($claim_id, $line_id) {
+    civicrm_initialize();
     $result = civicrm_api3('ClaimLine', 'Delete', array('id' => $line_id));
     drupal_goto('portal/edit-claim/'.$claim_id);
 }
@@ -473,9 +504,11 @@ function _pum_claims_getClaimLinksForContact($contact_id) {
 function _pum_claims_getClaimLines($claim_id) {
     $lines = array();
     $currencies = _pum_claims_get_civicrm_currencies();
+    $types = _pum_claims_getClaimLineTypes();
     $result = civicrm_api3('ClaimLine', 'get', array('activity_id' => $claim_id, 'option.limit' => 0));
     foreach($result['values'] as $line) {
         $line['currency'] = $currencies[$line['currency_id']];
+        $line['expense_type'] = $types[$line['expense_type']];
         $lines[] = $line;
     }
     return $lines;
