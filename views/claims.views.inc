@@ -1,6 +1,9 @@
 <?php
 
 $claimActivityTypeId = civicrm_api3('OptionValue', 'getvalue', array('name' => 'Claim', 'option_group_id' => 'activity_type', 'return' => 'value'));
+$claimInformationCustomGroup = civicrm_api3('CustomGroup', 'getsingle', array('name' => 'Claiminformation'));
+$expensesCustomField = civicrm_api3('CustomField', 'getsingle', array('name' => 'Total_Expenses', 'custom_group_id' => $claimInformationCustomGroup['id']));
+$descriptionCustomField = civicrm_api3('CustomField', 'getsingle', array('name' => 'Description', 'custom_group_id' => $claimInformationCustomGroup['id']));
 
 $view = new view();
 $view->name = 'claims';
@@ -63,20 +66,24 @@ $handler->display->display_options['fields']['activity_date_time']['label'] = 'E
 $handler->display->display_options['fields']['activity_date_time']['date_format'] = 'custom';
 $handler->display->display_options['fields']['activity_date_time']['custom_date_format'] = 'Y-m-d';
 $handler->display->display_options['fields']['activity_date_time']['second_date_format'] = 'long';
-/* Field: CiviCRM Activities: Subject */
-$handler->display->display_options['fields']['subject']['id'] = 'subject';
-$handler->display->display_options['fields']['subject']['table'] = 'civicrm_activity';
-$handler->display->display_options['fields']['subject']['field'] = 'subject';
-/* Field: Global: Custom text */
-$handler->display->display_options['fields']['nothing']['id'] = 'nothing';
-$handler->display->display_options['fields']['nothing']['table'] = 'views';
-$handler->display->display_options['fields']['nothing']['field'] = 'nothing';
-$handler->display->display_options['fields']['nothing']['label'] = '';
-$handler->display->display_options['fields']['nothing']['alter']['text'] = 'Edit';
-$handler->display->display_options['fields']['nothing']['alter']['make_link'] = TRUE;
-$handler->display->display_options['fields']['nothing']['alter']['path'] = 'portal/edit-claim/[id]';
-$handler->display->display_options['fields']['nothing']['alter']['absolute'] = TRUE;
-$handler->display->display_options['fields']['nothing']['element_label_colon'] = FALSE;
+/* Field: CiviCRM Custom: Claiminformation: Total Amount */
+$handler->display->display_options['fields']['description']['id'] = 'description';
+$handler->display->display_options['fields']['description']['table'] = $claimInformationCustomGroup['table_name'];
+$handler->display->display_options['fields']['description']['field'] = $descriptionCustomField['column_name'];
+$handler->display->display_options['fields']['description']['alter']['nl2br'] = TRUE;
+$handler->display->display_options['fields']['description']['alter']['strip_tags'] = TRUE;
+/* Field: CiviCRM Custom: Claiminformation: Total Amount */
+$handler->display->display_options['fields']['total_expenses']['id'] = 'total_expenses';
+$handler->display->display_options['fields']['total_expenses']['table'] = $claimInformationCustomGroup['table_name'];
+$handler->display->display_options['fields']['total_expenses']['field'] = $expensesCustomField['column_name'];
+/* Field: Global: PHP */
+$handler->display->display_options['fields']['php']['id'] = 'php';
+$handler->display->display_options['fields']['php']['table'] = 'views';
+$handler->display->display_options['fields']['php']['field'] = 'php';
+$handler->display->display_options['fields']['php']['label'] = '';
+$handler->display->display_options['fields']['php']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['php']['use_php_setup'] = 0;
+$handler->display->display_options['fields']['php']['php_output'] = '<?php _pum_claims_view_edit_claim_link($row->id); ?>';
 /* Sort criterion: CiviCRM Activities: Scheduled Activity Date */
 $handler->display->display_options['sorts']['activity_date_time']['id'] = 'activity_date_time';
 $handler->display->display_options['sorts']['activity_date_time']['table'] = 'civicrm_activity';
