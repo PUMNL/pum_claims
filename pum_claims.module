@@ -156,8 +156,17 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['type']['#options'] = $claim_types;
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Link';
-    $form['about_me']['link']['#required'] = true;
+    $form['about_me']['link']['#required'] = false;
     $form['about_me']['link']['#options'] = $link_options;
+    $form['about_me']['link']['#states'] = array(
+      'visible' => array(
+        'select#edit-type' => array('value' => 'project'),
+      ),
+      'required' => array(
+        'select#edit-type' => array('value' => 'project'),
+      ),
+    );
+
     $form['about_me']['description']['#type'] = 'textfield';
     $form['about_me']['description']['#title'] = 'Description';
     $form['about_me']['description']['#required'] = true;
@@ -166,7 +175,6 @@ function pum_claims_form($form, &$form_state) {
         '#type' => 'submit',
         '#value' => t('Save and continue'),
     );
-
 
     return $form;
 }
@@ -364,11 +372,20 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['type']['#required'] = true;
     $form['about_me']['type']['#default_value'] = $claim['claim_type_id'];
     $form['about_me']['type']['#options'] = $claim_types;
+
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Link';
     $form['about_me']['link']['#required'] = true;
     $form['about_me']['link']['#default_value'] = $claim['claim_linked_to'];
     $form['about_me']['link']['#options'] = $link_options;
+    $form['about_me']['link']['#states'] = array(
+      'visible' => array(
+        'select#edit-type' => array('value' => 'project'),
+      ),
+      'required' => array(
+        'select#edit-type' => array('value' => 'project'),
+      ),
+    );
     $form['about_me']['description']['#type'] = 'textfield';
     $form['about_me']['description']['#title'] = 'Description';
     $form['about_me']['description']['#required'] = true;
@@ -453,7 +470,8 @@ function pum_claims_edit_form_submit($form, &$form_state) {
     $result = civicrm_api3('Claim', 'create', $params);
     $claim_id = $result['values']['id'];
 
-    drupal_goto('portal/edit-claim/'.$claim_id);
+    drupal_goto('portal/claims');
+    //drupal_goto('portal/edit-claim/'.$claim_id);
 }
 
 function pum_claims_form_submit_attachments($form, &$form_state) {
@@ -576,7 +594,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['expense_date']['#default_value'] = $line['expense_date'];
 
     $form['line']['type']['#type'] = 'select';
-    $form['line']['type']['#title'] = 'Claim type';
+    $form['line']['type']['#title'] = 'Claim line type';
     $form['line']['type']['#required'] = true;
     $form['line']['type']['#options'] = $line_types;
     $form['line']['type']['#default_value'] = $line['expense_type'];
