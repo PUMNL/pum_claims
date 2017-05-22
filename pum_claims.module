@@ -194,7 +194,9 @@ function pum_claims_form_submit($form, &$form_state) {
     $params['expense_date'] = $expenseDate->format("Ymd");
     $params['claim_type'] = $form_state['values']['type'];
     $params['claim_contact_id'] = $contact_id;
-    $params['claim_link'] = $form_state['values']['link'];
+    if($params['claim_type']=='project') {
+      $params['claim_link'] = $form_state['values']['link'];
+    }
     $params['claim_total_amount'] = 0;
     $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
@@ -258,7 +260,9 @@ function pum_claims_view($claim_id) {
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC:</strong> '.$bankDetails['bic'].'</p>';
     $form['about_me']['iban']['#markup'] = '<p><strong>IBAN:</strong> '.$bankDetails['iban'].'</p>';
     $form['about_me']['type']['#markup'] = '<p><strong>Claim type:</strong> '.$claim_types[$claim['claim_type_id']].'</p>';
-    $form['about_me']['link']['#markup'] = '<p><strong>Link:</strong> '.$link_options[$claim['claim_linked_to']].'</p>';
+    if(isset($claim['claim_linked_to'])) {
+      $form['about_me']['link']['#markup'] = '<p><strong>Link:</strong> ' . $link_options[$claim['claim_linked_to']] . '</p>';
+    }
     $form['about_me']['description']['#markup'] = '<p><strong>Description:</strong> '.$claim['claim_description'].'</p>';
 
     $form['lines']['#type'] = 'fieldset';
@@ -376,7 +380,9 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Link';
     $form['about_me']['link']['#required'] = true;
-    $form['about_me']['link']['#default_value'] = $claim['claim_linked_to'];
+    if($claim['claim_type']=='project') {
+      $form['about_me']['link']['#default_value'] = $claim['claim_linked_to'];
+    }   
     $form['about_me']['link']['#options'] = $link_options;
     $form['about_me']['link']['#states'] = array(
       'visible' => array(
@@ -464,7 +470,10 @@ function pum_claims_edit_form_submit($form, &$form_state) {
     $params['expense_date'] = $expenseDate->format("Ymd");
     $params['claim_type'] = $form_state['values']['type'];
     $params['claim_contact_id'] = $contact_id;
-    $params['claim_link'] = $form_state['values']['link'];
+    /* only a project needs a claim link */
+    if($params['claim_type']=='project') {
+      $params['claim_link'] = $form_state['values']['link'];
+    }
     $params['claim_total_amount'] = 0;
     $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
