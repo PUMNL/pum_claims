@@ -84,7 +84,7 @@ function pum_claims_views_default_views() {
 
 function _pum_claims_view_edit_claim_link($claim_id) {
     if (pum_claims_is_claim_editable($claim_id)) {
-        $url = url('portal/edit-claim/'.$claim_id, array('absolute' => true));
+        $url = url('portal/edit-claim/'.$claim_id, array('absolute' => true, 'fragment' => 'edit-lines'));
         echo '<a href="'.$url.'">Edit</a>';
     } else {
         $url = url('portal/view-claim/'.$claim_id, array('absolute' => true));
@@ -189,7 +189,7 @@ function pum_claims_form_submit($form, &$form_state) {
     $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
     $claim_id = $result['values']['id'];
-    drupal_goto('portal/edit-claim/'.$claim_id);
+    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_view($claim_id) {
@@ -474,7 +474,7 @@ function pum_claims_form_submit_attachments($form, &$form_state) {
         pum_claims_copy_file_to_activity($filepath, $file->filemime, $claim_id);
     }
 
-    drupal_goto('portal/edit-claim/'.$claim_id);
+    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_remove_attachment($claim_id, $file_id) {
@@ -483,7 +483,7 @@ function pum_claims_remove_attachment($claim_id, $file_id) {
     }
     civicrm_initialize();
     CRM_Core_BAO_File::deleteEntityFile('civicrm_activity', $claim_id, NULL, $file_id);
-    drupal_goto('portal/edit-claim/'.$claim_id);
+    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_copy_file_to_activity($file, $mimeType, $activity_id) {
@@ -634,7 +634,7 @@ function pum_claims_line_form_submit($form, &$form_state) {
     $params['description'] = $form_state['values']['description'];
     $params['expense_type'] = $form_state['values']['type'];
     civicrm_api3('ClaimLine', 'create', $params);
-    drupal_goto('portal/edit-claim/'.$claim_id);
+    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_remove_line($claim_id, $line_id) {
@@ -644,7 +644,7 @@ function pum_claims_remove_line($claim_id, $line_id) {
 
     civicrm_initialize();
     $result = civicrm_api3('ClaimLine', 'Delete', array('id' => $line_id));
-    drupal_goto('portal/edit-claim/'.$claim_id);
+    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 
