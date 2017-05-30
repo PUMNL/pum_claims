@@ -177,10 +177,12 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['type']['#title'] = 'Claim type';
     $form['about_me']['type']['#required'] = true;
     $form['about_me']['type']['#options'] = $claim_types;
+    $form['about_me']['type']['#description'] = 'Specify from what role you claim. E.g. Expert (PUM Main Activity), Sector Coordinator (SC), Country Coordinator (CC), etc.';
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Link';
     $form['about_me']['link']['#required'] = false;
     $form['about_me']['link']['#options'] = $link_options;
+    $form['about_me']['link']['#description'] = 'If the activities are related to a Project, you can here choose the specific project (pull down menu) from the list.';
     $form['about_me']['link']['#states'] = array(
       'visible' => array(
         'select#edit-type' => array('value' => 'project'),
@@ -193,6 +195,7 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['description']['#type'] = 'textfield';
     $form['about_me']['description']['#title'] = 'Description';
     $form['about_me']['description']['#required'] = true;
+    $form['about_me']['description']['#description'] = 'Please enter a free description that reflects the spendings that you claim. You also will see this description in your personal overview of the submitted claims.';
 
     $form['submit_button'] = array(
         '#type' => 'submit',
@@ -365,8 +368,8 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $lineitemRows = array();
     $totalAmount = 0.00;
     foreach($lines as $line) {
-        $editLink = '<a href="'.url('portal/claims/'.$claim_id.'/edit-line/'.$line['id']).'">Edit</a>';
-        $removeLink = '<a href="'.url('portal/claims/'.$claim_id.'/remove-line/'.$line['id']).'">Remove</a>';
+        $editLink = '<a href="'.url('portal/claims/'.$claim_id.'/edit-line/'.$line['id']).'" title="Through this button you enter the sequel screen and you can customize the data entered">Edit</a>';
+        $removeLink = '<a href="'.url('portal/claims/'.$claim_id.'/remove-line/'.$line['id']).'" title="Through this button you can delete the imported rule">Remove</a>';
 
         $lineitemRow = array();
         $lineitemRow[] = $line['expense_date'];
@@ -408,6 +411,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['type']['#required'] = true;
     $form['about_me']['type']['#default_value'] = $claim['claim_type_id'];
     $form['about_me']['type']['#options'] = $claim_types;
+    $form['about_me']['type']['#description'] = 'Specify from what role you claim. E.g. Expert (PUM Main Activity), Sector Coordinator (SC), Country Coordinator (CC), etc.';
 
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Link';
@@ -415,6 +419,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
       $form['about_me']['link']['#default_value'] = $claim['claim_linked_to'];
     }   
     $form['about_me']['link']['#options'] = $link_options;
+    $form['about_me']['link']['#description'] = 'If the activities are related to a Project, you can here choose the specific project (pull down menu) from the list.';
     $form['about_me']['link']['#states'] = array(
       'visible' => array(
         'select#edit-type' => array('value' => 'project'),
@@ -427,11 +432,12 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['description']['#title'] = 'Description';
     $form['about_me']['description']['#required'] = true;
     $form['about_me']['description']['#default_value'] = $claim['claim_description'];
+    $form['about_me']['description']['#description'] = 'Please enter a free description that reflects the spendings that you claim. You also will see this description in your personal overview of the submitted claims.';
 
     $form['lines']['#type'] = 'fieldset';
     $form['lines']['#title'] = 'My expenses';
     $form['lines']['new-line']['#type'] = 'markup';
-    $form['lines']['new-line']['#markup'] = '<p><a href="/portal/claims/'.$claim_id.'/add-line" class="button">Add expense line</a></p>';
+    $form['lines']['new-line']['#markup'] = '<p><a href="/portal/claims/'.$claim_id.'/add-line" class="button" title="Through this button you enter the sequel screen, in which you can enter a line.">Add expense line</a></p>';
 
     if (count($lineitemRows)) {
         $form['lines']['table']['#theme'] = 'table';
@@ -461,14 +467,23 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['attachments']['upload']['explanation']['#markup'] = '<p class="description">Please upload one or more attachments</p>';
     $form['attachments']['upload']['file']['#title'] = t('File');
     $form['attachments']['upload']['file']['#type'] = 'file';
+    $form['attachments']['upload']['file']['#description'] = 'Via this button files (attachments) can be selected which you would like to add to the Claim.';
     $form['attachments']['upload']['button']['#type'] = 'submit';
     $form['attachments']['upload']['button']['#value'] = 'Upload';
     $form['attachments']['upload']['button']['#submit'] = array('pum_claims_form_submit_attachments');
+    $form['attachments']['upload']['button']['#attributes']['title'] = 'Via this button the selected files (attachments) can be added to the Claim';
 
+    $form['agree']['#type'] = 'fieldset';
+    $form['agree']['agree']['#type'] = 'checkbox';
+    $form['agree']['agree']['#required'] = TRUE;
+    $form['agree']['agree']['#title'] = 'All items submitted I have filled out in good faith and with all possible attachments.';
 
     $form['submit_button'] = array(
         '#type' => 'submit',
         '#value' => t('Save'),
+        '#attributes' => array(
+          'title' => 'Via this button the entered data is stored and forwarded for approval',
+        ),
     );
 
 
@@ -630,23 +645,27 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['expense_date']['#date_year_range'] = '-2:0';
     $form['line']['expense_date']['#datepicker_options']['maxDate'] = '+0d';
     $form['line']['expense_date']['#default_value'] = $line['expense_date'];
+    $form['line']['expense_date']['#description'] = 'On the basis of a calendar, select the date on which the expenditure was incurred.';
 
     $form['line']['type']['#type'] = 'select';
     $form['line']['type']['#title'] = 'Claim line type';
     $form['line']['type']['#required'] = true;
     $form['line']['type']['#options'] = $line_types;
     $form['line']['type']['#default_value'] = $line['expense_type'];
+    $form['line']['type']['#description'] = 'The claim line type is used to categorize the costs for administrative purposes. Please make a selection from the options in the pull-down menu.';
 
     $form['line']['currency']['#type'] = 'select';
     $form['line']['currency']['#title'] = 'Currency';
     $form['line']['currency']['#required'] = true;
     $form['line']['currency']['#options'] = $currencies;
     $form['line']['currency']['#default_value'] = $line['currency_id'];
+    $form['line']['currency']['#description'] = 'Please make a selection from the options in the pull-down menu.';
 
     $form['line']['amount']['#type'] = 'textfield';
     $form['line']['amount']['#title'] = 'Amount (in currency)'; // @todo validation for right fornmat
     $form['line']['amount']['#required'] = true;
     $form['line']['amount']['#default_value'] = $line['currency_amount'];
+    $form['line']['amount']['#description'] = 'Enter the amount of the note, in the respective currency';
 
     $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: <span id="euro-amount">'.$line['euro_amount'].'</span></p>';
 
@@ -654,6 +673,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['description']['#title'] = 'Description';
     $form['line']['description']['#required'] = true;
     $form['line']['description']['#default_value'] = $line['description'];
+    $form['line']['description']['#description'] = 'Plaese enter a short description of the expenditure incurred';
 
     $form['submit_button'] = array(
         '#type' => 'submit',
