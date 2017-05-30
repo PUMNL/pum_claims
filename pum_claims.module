@@ -594,6 +594,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
 
     drupal_add_js(array('pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'))), 'setting');
     drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
+    drupal_add_css(drupal_get_path('module', 'pum_claims') . '/pum_claims.css');
 
     civicrm_initialize();
 

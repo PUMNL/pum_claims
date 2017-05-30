@@ -12,3 +12,9 @@
     padding: 5px;
     width: 350px;
 }
+#pum-claims-line-form #edit-expense-date {
+    padding: 0px;
+}
+#pum-claims-line-form .form-item-expense-date-date .description {
+    display: none;
+}
