@@ -13,7 +13,7 @@ function pum_claims_menu() {
         'access callback' => 'pum_claims_user_has_role',
         'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
-    $items['portal/edit-claim/%'] = array(
+    $items['portal/claims/%'] = array(
         'title' => 'Edit claim',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_edit_form', 2),
@@ -27,35 +27,35 @@ function pum_claims_menu() {
         'access callback' => 'pum_claims_user_has_role',
         'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
-    $items['portal/edit-claim/%/add-line'] = array(
+    $items['portal/claims/%/add-line'] = array(
         'title' => 'Submit a new claim line',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_line_form', 2),
         'access callback' => 'pum_claims_user_has_role',
         'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
-    $items['portal/edit-claim/%/edit-line/%'] = array(
+    $items['portal/claims/%/edit-line/%'] = array(
         'title' => 'Edit a claim line',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_line_form', 2, 4),
         'access callback' => 'pum_claims_user_has_role',
         'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
-    $items['portal/edit-claim/%/remove-line/%'] = array(
+    $items['portal/claims/%/remove-line/%'] = array(
         'title' => 'Submit a new claim line',
         'page callback' => 'pum_claims_remove_line',
         'page arguments' => array(2, 4),
         'access callback' => 'pum_claims_user_has_role',
         'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
-    $items['portal/edit-claim/%/remove-attachment/%'] = array(
+    $items['portal/claims/%/remove-attachment/%'] = array(
         'title' => 'Remove attachment',
         'page callback' => 'pum_claims_remove_attachment',
         'page arguments' => array(2, 4),
         'access callback' => 'pum_claims_user_has_role',
         'access arguments' => array(pum_claims_get_roles_who_can_access()),
     );
-    $items['portal/edit-claim/convert_currency'] = array(
+    $items['portal/claims/convert_currency'] = array(
         'title' => 'Convert currency',
         'page callback' => 'pum_claims_convert_currency',
         'page arguments' => array(),
@@ -84,7 +84,7 @@ function pum_claims_views_default_views() {
 
 function _pum_claims_view_edit_claim_link($claim_id) {
     if (pum_claims_is_claim_editable($claim_id)) {
-        $url = url('portal/edit-claim/'.$claim_id, array('absolute' => true, 'fragment' => 'edit-lines'));
+        $url = url('portal/claims/'.$claim_id, array('absolute' => true, 'fragment' => 'edit-lines'));
         echo '<a href="'.$url.'">Edit</a>';
     } else {
         $url = url('portal/view-claim/'.$claim_id, array('absolute' => true));
@@ -189,7 +189,7 @@ function pum_claims_form_submit($form, &$form_state) {
     $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
     $claim_id = $result['values']['id'];
-    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
+    drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_view($claim_id) {
@@ -301,7 +301,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $attachmentRows = array();
     $attachments = CRM_Core_BAO_File::getEntityFile('civicrm_activity', $claim_id);
     foreach($attachments as $attachment) {
-        $removeLink = '<a href="'.url('portal/edit-claim/'.$claim_id.'/remove-attachment/'.$attachment['fileID'], array('absolute' => true)).'">Remove</a>';
+        $removeLink = '<a href="'.url('portal/claims/'.$claim_id.'/remove-attachment/'.$attachment['fileID'], array('absolute' => true)).'">Remove</a>';
         $attachmentRow = array();
         $attachmentRow[] = $attachment['href'];
         $attachmentRow[] = $removeLink;
@@ -312,8 +312,8 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $lineitemRows = array();
     $totalAmount = 0.00;
     foreach($lines as $line) {
-        $editLink = '<a href="'.url('portal/edit-claim/'.$claim_id.'/edit-line/'.$line['id']).'">Edit</a>';
-        $removeLink = '<a href="'.url('portal/edit-claim/'.$claim_id.'/remove-line/'.$line['id']).'">Remove</a>';
+        $editLink = '<a href="'.url('portal/claims/'.$claim_id.'/edit-line/'.$line['id']).'">Edit</a>';
+        $removeLink = '<a href="'.url('portal/claims/'.$claim_id.'/remove-line/'.$line['id']).'">Remove</a>';
 
         $lineitemRow = array();
         $lineitemRow[] = $line['expense_date'];
@@ -378,7 +378,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['lines']['#type'] = 'fieldset';
     $form['lines']['#title'] = 'My expenses';
     $form['lines']['new-line']['#type'] = 'markup';
-    $form['lines']['new-line']['#markup'] = '<p><a href="/portal/edit-claim/'.$claim_id.'/add-line" class="button">Add expense line</a></p>';
+    $form['lines']['new-line']['#markup'] = '<p><a href="/portal/claims/'.$claim_id.'/add-line" class="button">Add expense line</a></p>';
 
     if (count($lineitemRows)) {
         $form['lines']['table']['#theme'] = 'table';
@@ -454,7 +454,7 @@ function pum_claims_edit_form_submit($form, &$form_state) {
     $claim_id = $result['values']['id'];
 
     drupal_goto('portal/claims');
-    //drupal_goto('portal/edit-claim/'.$claim_id);
+    //drupal_goto('portal/claims/'.$claim_id);
 }
 
 function pum_claims_form_submit_attachments($form, &$form_state) {
@@ -474,7 +474,7 @@ function pum_claims_form_submit_attachments($form, &$form_state) {
         pum_claims_copy_file_to_activity($filepath, $file->filemime, $claim_id);
     }
 
-    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
+    drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_remove_attachment($claim_id, $file_id) {
@@ -483,7 +483,7 @@ function pum_claims_remove_attachment($claim_id, $file_id) {
     }
     civicrm_initialize();
     CRM_Core_BAO_File::deleteEntityFile('civicrm_activity', $claim_id, NULL, $file_id);
-    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
+    drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_copy_file_to_activity($file, $mimeType, $activity_id) {
@@ -539,7 +539,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
         drupal_goto(url('portal/view-claim/'.$claim_id, array('absolute' => true)));
     }
 
-    drupal_add_js(array('pum_claims' => array('currencyConvertUrl' => url('portal/edit-claim/convert_currency'))), 'setting');
+    drupal_add_js(array('pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'))), 'setting');
     drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
 
     civicrm_initialize();
@@ -634,7 +634,7 @@ function pum_claims_line_form_submit($form, &$form_state) {
     $params['description'] = $form_state['values']['description'];
     $params['expense_type'] = $form_state['values']['type'];
     civicrm_api3('ClaimLine', 'create', $params);
-    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
+    drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 function pum_claims_remove_line($claim_id, $line_id) {
@@ -644,7 +644,7 @@ function pum_claims_remove_line($claim_id, $line_id) {
 
     civicrm_initialize();
     $result = civicrm_api3('ClaimLine', 'Delete', array('id' => $line_id));
-    drupal_goto('portal/edit-claim/'.$claim_id, array('fragment' => 'edit-lines'));
+    drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
 }
 
 
