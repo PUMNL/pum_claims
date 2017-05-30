@@ -379,8 +379,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
 
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Link';
-    $form['about_me']['link']['#required'] = true;
-    if($claim['claim_type']=='project') {
+    if($claim['claim_type_id']=='project') {
       $form['about_me']['link']['#default_value'] = $claim['claim_linked_to'];
     }   
     $form['about_me']['link']['#options'] = $link_options;
