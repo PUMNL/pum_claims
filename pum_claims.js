@@ -20,10 +20,18 @@
 
     }
 
-    Drupal.behaviors.ajaxExample = {
+    Drupal.behaviors.claims = {
         attach: function (context, settings) {
             $('#edit-currency', context).change(pum_claims_convert_currency);
             $('#edit-amount', context).change(pum_claims_convert_currency);
+            $('.line-amount-eur').hover(
+                function() {
+                    jQuery(this).children('.line-log').css('display', '');
+                },
+                function () {
+                    jQuery(this).children('.line-log').css('display', 'none');
+                }
+            );
         }
     };
 

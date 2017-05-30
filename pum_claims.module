@@ -99,11 +99,42 @@ function pum_claims_is_claim_editable($claim_id) {
     if ($countProcessed) {
         return false;
     }
+    $countClaimLineLogItems = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) FROM pum_claim_line_log WHERE claim_line_id IN (SELECT id FROM pum_claim_line WHERE activity_id = %1)", $sqlParams);
+    if ($countClaimLineLogItems) {
+      return false;
+    }
     $count = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) FROM pum_claim_log WHERE claim_activity_id = %1 AND processed_date IS NULL", $sqlParams);
     if ($count) {
         return true;
     }
     return false;
+}
+
+function pum_claims_get_amount_submitted($claim_id) {
+  $lines = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line WHERE activity_id = %1", array(1=>array($claim_id, 'Integer')));
+  $original_amount = 0.00;
+  while ($lines->fetch()) {
+    $original_line_amount = $lines->euro_amount;
+    $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 ORDER BY changed_date DESC LIMIT 1", array(1=>array($lines->id, 'Integer')));
+    if ($line_log_items->fetch() && isset($line_log_items->old_euro_amount)) {
+      $original_line_amount = $line_log_items->old_euro_amount;
+    }
+    $original_amount = $original_amount + $original_line_amount;
+  }
+  return $original_amount;
+}
+
+function pum_claims_get_amount_approved($claim_id) {
+  if (pum_claims_is_claim_editable($claim_id)) {
+    return null;
+  }
+
+  $lines = _pum_claims_getClaimLines($claim_id);
+  $totalAmount = 0.00;
+  foreach($lines as $line) {
+    $totalAmount = $totalAmount + ((float) $line['euro_amount']);
+  }
+  return $totalAmount;
 }
 
 function pum_claims_convert_currency() {
@@ -200,6 +231,9 @@ function pum_claims_view($claim_id) {
         'return' => 'contact_id'
     ));
 
+    drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
+    drupal_add_css(drupal_get_path('module', 'pum_claims') . '/pum_claims.css');
+
     $claim = civicrm_api3('Claim', 'getsingle', array('id' => $claim_id));
 
     $attachmentRows = array();
@@ -214,12 +248,30 @@ function pum_claims_view($claim_id) {
     $lineitemRows = array();
     $totalAmount = 0.00;
     foreach($lines as $line) {
+        $amount_submitted = $line['euro_amount'];
+        $euro_amount = $line['euro_amount'];
+        $euro_amount = 'EUR ' . number_format($amount_submitted, 2, '.', ',');
+        $lineLog = '';
+        $lineLogItems = civicrm_api3('ClaimLineLog', 'get', array('claim_line_id' => $line['id'], 'options' => array('limit' => 0)));
+        foreach ($lineLogItems['values'] as $lineLogItem) {
+          $logDate = new DateTime($lineLogItem['changed_date']);
+          $lineLog .= '<p>'.$logDate->format('Y-m-d').': '.$lineLogItem['change_reason'].'</p>';
+        }
+        if (strlen($lineLog)) {
+          $euro_amount = '<span class="line-amount-eur">'.$euro_amount.'&nbsp;<span class="helpicon">&nbsp;</span> <div style="display: none;" class="line-log">'.$lineLog.'</div></span>';
+        }
+
+        $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 ORDER BY changed_date DESC LIMIT 1", array(1=>array($line['id'], 'Integer')));
+        if ($line_log_items->fetch() && isset($line_log_items->old_euro_amount)) {
+          $amount_submitted = $line_log_items->old_euro_amount;
+        }
+
         $lineitemRow = array();
         $lineitemRow[] = $line['expense_date'];
         $lineitemRow[] = $line['expense_type'];
-        $lineitemRow[] = $line['currency'];
-        $lineitemRow[] = $line['currency_amount'];
-        $lineitemRow[] = $line['euro_amount'];
+        $lineitemRow[] = $line['currency'] . ' ' . number_format($line['currency_amount'], 2, '.', ',');
+        $lineitemRow[] = 'EUR '.number_format($amount_submitted, 2, '.', ',');
+        $lineitemRow[] = $euro_amount;
         $lineitemRow[] = $line['description'];
         $lineitemRows[] = $lineitemRow;
 
@@ -261,9 +313,9 @@ function pum_claims_view($claim_id) {
         $form['lines']['table']['#header'] = array(
             'Date',
             'Expense type',
-            'Currency',
             'Amount',
-            'Amount EUR',
+            'Amount submitted',
+            'Amount approved',
             'Description',
         );
         $form['lines']['table']['#attributes'] = array('width' => '100%');

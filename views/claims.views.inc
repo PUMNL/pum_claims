@@ -72,10 +72,22 @@ $handler->display->display_options['fields']['description']['table'] = $claimInf
 $handler->display->display_options['fields']['description']['field'] = $descriptionCustomField['column_name'];
 $handler->display->display_options['fields']['description']['alter']['nl2br'] = TRUE;
 $handler->display->display_options['fields']['description']['alter']['strip_tags'] = TRUE;
-/* Field: CiviCRM Custom: Claiminformation: Total Amount */
-$handler->display->display_options['fields']['total_expenses']['id'] = 'total_expenses';
-$handler->display->display_options['fields']['total_expenses']['table'] = $claimInformationCustomGroup['table_name'];
-$handler->display->display_options['fields']['total_expenses']['field'] = $expensesCustomField['column_name'];
+/* Field: Global: PHP */
+$handler->display->display_options['fields']['amount_submitted']['id'] = 'amount_submitted';
+$handler->display->display_options['fields']['amount_submitted']['table'] = 'views';
+$handler->display->display_options['fields']['amount_submitted']['field'] = 'php';
+$handler->display->display_options['fields']['amount_submitted']['label'] = 'Amount submitted';
+$handler->display->display_options['fields']['amount_submitted']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['amount_submitted']['use_php_setup'] = 0;
+$handler->display->display_options['fields']['amount_submitted']['php_output'] = '<?php $submitted_amount = pum_claims_get_amount_submitted($row->id); echo "&euro; " . number_format($submitted_amount, 2, \'.\', \',\'); ?>';
+/* Field: Global: PHP */
+$handler->display->display_options['fields']['amount_approved']['id'] = 'amount_approved';
+$handler->display->display_options['fields']['amount_approved']['table'] = 'views';
+$handler->display->display_options['fields']['amount_approved']['field'] = 'php';
+$handler->display->display_options['fields']['amount_approved']['label'] = 'Amount approved';
+$handler->display->display_options['fields']['amount_approved']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['amount_approved']['use_php_setup'] = 0;
+$handler->display->display_options['fields']['amount_approved']['php_output'] = '<?php $approved_amount = pum_claims_get_amount_approved($row->id); if ($approved_amount) { echo "&euro; " . number_format($approved_amount, 2, \'.\', \',\'); } ?>';
 /* Field: Global: PHP */
 $handler->display->display_options['fields']['php']['id'] = 'php';
 $handler->display->display_options['fields']['php']['table'] = 'views';

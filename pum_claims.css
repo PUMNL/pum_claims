@@ -1,0 +1,14 @@
+.page-portal-view-claim .line-amount-eur {
+    cursor: pointer;
+}
+.page-portal-view-claim .line-amount-eur .helpicon {
+    background: url('help.png') no-repeat 0 0;
+    padding: 10px 0 0 26px;
+}
+.page-portal-view-claim .line-amount-eur .line-log {
+    position: absolute;
+    background-color: black;
+    color: white;
+    padding: 5px;
+    width: 350px;
+}
