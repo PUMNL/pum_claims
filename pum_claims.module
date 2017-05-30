@@ -250,7 +250,7 @@ function pum_claims_view($claim_id) {
     foreach($lines as $line) {
         $amount_submitted = $line['euro_amount'];
         $euro_amount = $line['euro_amount'];
-        $euro_amount = 'EUR ' . number_format($amount_submitted, 2, '.', ',');
+        $euro_amount = 'EUR ' . number_format($euro_amount, 2, '.', ',');
         $lineLog = '';
         $lineLogItems = civicrm_api3('ClaimLineLog', 'get', array('claim_line_id' => $line['id'], 'options' => array('limit' => 0)));
         foreach ($lineLogItems['values'] as $lineLogItem) {
