@@ -137,19 +137,10 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['#type'] = 'fieldset';
     $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
     $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
-    $form['about_me']['bank_name']['#type'] = 'textfield';
-    $form['about_me']['bank_name']['#title'] = 'Bank name';
-    $form['about_me']['bank_name']['#required'] = true;
-    $form['about_me']['bank_name']['#default_value'] = $bankDetails['bank'];
-    $form['about_me']['bic']['#type'] = 'textfield';
-    $form['about_me']['bic']['#title'] = 'BIC';
-    $form['about_me']['bic']['#attributes']['class'][] = 'small';
-    $form['about_me']['bic']['#required'] = true;
-    $form['about_me']['bic']['#default_value'] = $bankDetails['bic'];
-    $form['about_me']['iban']['#type'] = 'textfield';
-    $form['about_me']['iban']['#title'] = 'IBAN';
-    $form['about_me']['iban']['#required'] = true;
-    $form['about_me']['iban']['#default_value'] = $bankDetails['iban'];
+    $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please send a message with the right data to sectorsupport@pum.nl</em></p>';
+    $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
+    $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
+    $form['about_me']['iban']['#markup'] = '<p><strong>IBAN: </strong> ' . $bankDetails['iban'] . '</p>';
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim type';
     $form['about_me']['type']['#required'] = true;
@@ -186,9 +177,6 @@ function pum_claims_form_submit($form, &$form_state) {
         'uf_id' => $user->uid,
         'return' => 'contact_id'
     ));
-    $contact = civicrm_api3('Contact', 'getsingle', array('id' => $contact_id));
-
-    _pum_claims_updateBankDetailsOfContact($contact_id, $form_state['values']['bank_name'], $form_state['values']['iban'], $form_state['values']['bic']);
 
     $expenseDate = new DateTime();
     $params['expense_date'] = $expenseDate->format("Ymd");
@@ -358,19 +346,10 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['#type'] = 'fieldset';
     $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
     $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
-    $form['about_me']['bank_name']['#type'] = 'textfield';
-    $form['about_me']['bank_name']['#title'] = 'Bank name';
-    $form['about_me']['bank_name']['#required'] = true;
-    $form['about_me']['bank_name']['#default_value'] = $bankDetails['bank'];
-    $form['about_me']['bic']['#type'] = 'textfield';
-    $form['about_me']['bic']['#title'] = 'BIC';
-    $form['about_me']['bic']['#attributes']['class'][] = 'small';
-    $form['about_me']['bic']['#required'] = true;
-    $form['about_me']['bic']['#default_value'] = $bankDetails['bic'];
-    $form['about_me']['iban']['#type'] = 'textfield';
-    $form['about_me']['iban']['#title'] = 'IBAN';
-    $form['about_me']['iban']['#required'] = true;
-    $form['about_me']['iban']['#default_value'] = $bankDetails['iban'];
+    $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please send a message with the right data to sectorsupport@pum.nl</em></p>';
+    $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
+    $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
+    $form['about_me']['iban']['#markup'] = '<p><strong>IBAN: </strong> ' . $bankDetails['iban'] . '</p>';
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim type';
     $form['about_me']['type']['#required'] = true;
@@ -456,12 +435,8 @@ function pum_claims_edit_form_submit($form, &$form_state) {
         'uf_id' => $user->uid,
         'return' => 'contact_id'
     ));
-    $contact = civicrm_api3('Contact', 'getsingle', array('id' => $contact_id));
-
-    _pum_claims_updateBankDetailsOfContact($contact_id, $form_state['values']['bank_name'], $form_state['values']['iban'], $form_state['values']['bic']);
 
     $expenseDate = new DateTime();
-
     if ($claim_id) {
         $params['id'] = $claim_id;
     }
