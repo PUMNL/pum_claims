@@ -708,7 +708,7 @@ function pum_claims_get_role_ids($roles) {
 
 function _pum_claims_get_civicrm_currencies() {
     $return = array();
-    $dao = CRM_Core_DAO::executeQuery("SELECT * FROM civicrm_currency");
+    $dao = CRM_Core_DAO::executeQuery("SELECT * FROM civicrm_currency ORDER BY name ASC");
     while ($dao->fetch()) {
         $return[$dao->id] = $dao->name;
     }
