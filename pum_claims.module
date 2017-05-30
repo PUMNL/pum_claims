@@ -140,8 +140,9 @@ function pum_claims_get_amount_approved($claim_id) {
 function pum_claims_convert_currency() {
     $currency_id = (int) $_GET['currency_id'];
     $amount = (float) $_GET['amount'];
+    $conversion_date = new DateTime($_GET['conversion_date']);
     civicrm_initialize();
-    $result = civicrm_api3('Currency', 'Convert', array('currency_id' => $currency_id, 'amount' => $amount));
+    $result = civicrm_api3('Currency', 'Convert', array('currency_id' => $currency_id, 'amount' => $amount, 'conversion_date' => $conversion_date->format('Ymd')));
     echo number_format($result['euro_amount'], 2, ',', '.');
     exit();
 }
@@ -625,7 +626,8 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['expense_date']['#required'] = TRUE;
     $form['line']['expense_date']['#date_format'] = 'Y-m-d';
     $form['line']['expense_date']['#date_increment'] = 1;
-    $form['line']['expense_date']['#date_year_range'] = '-2:+2';
+    $form['line']['expense_date']['#date_year_range'] = '-2:0';
+    $form['line']['expense_date']['#datepicker_options']['maxDate'] = '+0d';
     $form['line']['expense_date']['#default_value'] = $line['expense_date'];
 
     $form['line']['type']['#type'] = 'select';
@@ -657,7 +659,17 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
         '#value' => t('Save'),
     );
 
+    $form['#validate'][] = 'pum_claims_line_form_validate';
+
     return $form;
+}
+
+function pum_claims_line_form_validate($form, &$form_state) {
+  $expense_date = new DateTime($form_state['values']['expense_date']);
+  $now = new DateTime();
+  if ($expense_date > $now) {
+    form_set_error('expense_date', 'You cannot enter an expense line in the future.');
+  }
 }
 
 function pum_claims_line_form_submit($form, &$form_state) {
