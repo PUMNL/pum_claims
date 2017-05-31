@@ -93,21 +93,15 @@ function _pum_claims_view_edit_claim_link($claim_id) {
 }
 
 function pum_claims_is_claim_editable($claim_id) {
+
     civicrm_initialize();
     $sqlParams[1] = array($claim_id, 'Integer');
-    $countProcessed = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) FROM pum_claim_log WHERE claim_activity_id = %1 AND processed_date IS NOT NULL", $sqlParams);
+    $countProcessed = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) FROM pum_claim_log WHERE claim_activity_id = %1", $sqlParams);
     if ($countProcessed) {
         return false;
+    } else {
+      return true;
     }
-    $countClaimLineLogItems = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) FROM pum_claim_line_log WHERE claim_line_id IN (SELECT id FROM pum_claim_line WHERE activity_id = %1)", $sqlParams);
-    if ($countClaimLineLogItems) {
-      return false;
-    }
-    $count = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) FROM pum_claim_log WHERE claim_activity_id = %1 AND processed_date IS NULL", $sqlParams);
-    if ($count) {
-        return true;
-    }
-    return false;
 }
 
 function pum_claims_get_amount_submitted($claim_id) {
@@ -471,11 +465,12 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['attachments']['upload']['button']['#type'] = 'submit';
     $form['attachments']['upload']['button']['#value'] = 'Upload';
     $form['attachments']['upload']['button']['#submit'] = array('pum_claims_form_submit_attachments');
+    $form['attachments']['upload']['button']['#validate'] = array();
     $form['attachments']['upload']['button']['#attributes']['title'] = 'Via this button the selected files (attachments) can be added to the Claim';
 
     $form['agree']['#type'] = 'fieldset';
     $form['agree']['agree']['#type'] = 'checkbox';
-    $form['agree']['agree']['#required'] = TRUE;
+    $form['agree']['agree']['#required'] = FALSE;
     $form['agree']['agree']['#title'] = 'All items submitted I have filled out in good faith and with all possible attachments.';
 
     $form['submit_button'] = array(
@@ -520,7 +515,9 @@ function pum_claims_edit_form_submit($form, &$form_state) {
     $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
     $claim_id = $result['values']['id'];
-
+    if($form_state['values']['agree']){
+      $result = civicrm_api3('Claim', 'submit', $params);
+    }
     drupal_goto('portal/claims');
     //drupal_goto('portal/claims/'.$claim_id);
 }
