@@ -104,6 +104,18 @@ function pum_claims_is_claim_editable($claim_id) {
     }
 }
 
+function pum_claims_is_claim_approved($claim_id){
+
+    civicrm_initialize();
+    $claim = civicrm_api3('Claim','getsingle',array('id'=>$claim_id));
+    $config =  CRM_Expenseclaims_Config::singleton();
+    if($claim['claim_status_id']==$config->getInitiallyApprovedClaimStatusValue()|| $claim['claim_status_id']==$config->getApprovedClaimStatusValue()){
+      return true;
+    } else {
+      return false;
+    }
+}
+
 function pum_claims_get_amount_submitted($claim_id) {
   $lines = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line WHERE activity_id = %1", array(1=>array($claim_id, 'Integer')));
   $original_amount = 0.00;
@@ -120,6 +132,9 @@ function pum_claims_get_amount_submitted($claim_id) {
 
 function pum_claims_get_amount_approved($claim_id) {
   if (pum_claims_is_claim_editable($claim_id)) {
+    return null;
+  }
+  if(!pum_claims_is_claim_approved($claim_id)){
     return null;
   }
 
@@ -243,6 +258,7 @@ function pum_claims_view($claim_id) {
     }
 
     $lines = _pum_claims_getClaimLines($claim_id);
+    $approved = pum_claims_is_claim_approved($claim_id);
     $lineitemRows = array();
     $totalAmount = 0.00;
     foreach($lines as $line) {
@@ -269,7 +285,7 @@ function pum_claims_view($claim_id) {
         $lineitemRow[] = $line['expense_type'];
         $lineitemRow[] = $line['currency'] . ' ' . number_format($line['currency_amount'], 2, '.', ',');
         $lineitemRow[] = 'EUR '.number_format($amount_submitted, 2, '.', ',');
-        $lineitemRow[] = $euro_amount;
+        $lineitemRow[] = $approved ? $euro_amount : null;
         $lineitemRow[] = $line['description'];
         $lineitemRows[] = $lineitemRow;
 
