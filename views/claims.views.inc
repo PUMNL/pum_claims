@@ -4,6 +4,7 @@ $claimActivityTypeId = civicrm_api3('OptionValue', 'getvalue', array('name' => '
 $claimInformationCustomGroup = civicrm_api3('CustomGroup', 'getsingle', array('name' => 'Claiminformation'));
 $expensesCustomField = civicrm_api3('CustomField', 'getsingle', array('name' => 'Total_Expenses', 'custom_group_id' => $claimInformationCustomGroup['id']));
 $descriptionCustomField = civicrm_api3('CustomField', 'getsingle', array('name' => 'Description', 'custom_group_id' => $claimInformationCustomGroup['id']));
+$claimStatusCustomField = civicrm_api3('CustomField', 'getsingle', array('name' => 'pum_claim_status', 'custom_group_id' => $claimInformationCustomGroup['id']));
 
 $view = new view();
 $view->name = 'claims';
@@ -55,9 +56,14 @@ $handler->display->display_options['fields']['id']['separator'] = '';
 $handler->display->display_options['fields']['id']['exclude'] = TRUE;
 /* Field: CiviCRM Activities: Activity Status */
 $handler->display->display_options['fields']['status']['id'] = 'status';
+$handler->display->display_options['fields']['status']['table'] = $claimInformationCustomGroup['table_name'];
+$handler->display->display_options['fields']['status']['field'] = $claimStatusCustomField['column_name'];
+$handler->display->display_options['fields']['status']['alter']['nl2br'] = TRUE;
+$handler->display->display_options['fields']['status']['alter']['strip_tags'] = TRUE;
+/*$handler->display->display_options['fields']['status']['id'] = 'status';
 $handler->display->display_options['fields']['status']['table'] = 'civicrm_activity';
 $handler->display->display_options['fields']['status']['field'] = 'status';
-$handler->display->display_options['fields']['status']['label'] = 'Status';
+$handler->display->display_options['fields']['status']['label'] = 'Status';*/
 /* Field: CiviCRM Activities: Scheduled Activity Date */
 $handler->display->display_options['fields']['activity_date_time']['id'] = 'activity_date_time';
 $handler->display->display_options['fields']['activity_date_time']['table'] = 'civicrm_activity';
