@@ -294,7 +294,7 @@ function pum_claims_view($claim_id) {
     $form['about_me']['#type'] = 'fieldset';
     $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
     $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
-    $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong>strong> '.$bankDetails['bank'].'</p>';
+    $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '.$bankDetails['bank'].'</p>';
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC:</strong> '.$bankDetails['bic'].'</p>';
     $form['about_me']['iban']['#markup'] = '<p><strong>IBAN:</strong> '.$bankDetails['iban'].'</p>';
     $form['about_me']['type']['#markup'] = '<p><strong>Claim Role:</strong> '.$claim_types[$claim['claim_type_id']].'</p>';
