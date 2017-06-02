@@ -675,9 +675,10 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['currency']['#description'] = 'Please make a selection from the options in the pull-down menu.';
 
     $form['line']['amount']['#type'] = 'textfield';
-    $form['line']['amount']['#title'] = 'Amount (in currency)'; // @todo validation for right fornmat
+    $form['line']['amount']['#title'] = 'Amount (in currency)'; 
     $form['line']['amount']['#required'] = true;
     $form['line']['amount']['#default_value'] = $line['currency_amount'];
+    $form['line']['amount']['#element_validate'] = array('element_validate_number');
     $form['line']['amount']['#description'] = 'Enter the amount of the note, in the respective currency';
 
     $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: <span id="euro-amount">'.$line['euro_amount'].'</span></p>';
@@ -704,6 +705,7 @@ function pum_claims_line_form_validate($form, &$form_state) {
   if ($expense_date > $now) {
     form_set_error('expense_date', 'You cannot enter an expense line in the future.');
   }
+
 }
 
 function pum_claims_line_form_submit($form, &$form_state) {
