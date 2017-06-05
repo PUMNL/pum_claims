@@ -177,11 +177,11 @@ function pum_claims_form($form, &$form_state) {
     if(empty( $link_options)) {
      unset($claim_types['project']);
     }
-    
+
     $form['about_me']['#type'] = 'fieldset';
-    $form['about_me']['name']['#markup'] = '<p><strong>NNName: </strong>'.$contact['display_name'].'</p>';
+    $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
     $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
-    $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please send a message with the right data to sectorsupport@pum.nl</em></p>';
+    $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please use the form Personal Data under My Profile to correct the information.</em></p>';
     $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
     $form['about_me']['iban']['#markup'] = '<p><strong>IBAN: </strong> ' . $bankDetails['iban'] . '</p>';
@@ -194,7 +194,7 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['link']['#title'] = 'Main Activity/Case';
     $form['about_me']['link']['#required'] = false;
     $form['about_me']['link']['#options'] = $link_options;
-    $form['about_me']['link']['#description'] = 'The activities are related to a Main/Activity, please select the specific Main/Activity (pull down menu) from the list.';
+    $form['about_me']['link']['#description'] = 'The activities are related to a Main Activity/Case, please select the specific Main Activity/Case (pull down menu) from the list.';
     $form['about_me']['link']['#states'] = array(
       'visible' => array(
         'select#edit-type' => array('value' => 'project'),
@@ -413,7 +413,6 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
 
     $claim_types = _pum_claims_getClaimTypes();
     $link_options = _pum_claims_getClaimLinksForContact($contact_id);
-    watchdog('pum_claims',print_r($link_options,true));
     if(empty($link_options)){
        unset($claim_types['project']);
     }
@@ -424,7 +423,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['#type'] = 'fieldset';
     $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
     $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
-    $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please send a message with the right data to sectorsupport@pum.nl</em></p>';
+    $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please use the form Personal Data under My Profile to correct the information.</em></p>';
     $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
     $form['about_me']['iban']['#markup'] = '<p><strong>IBAN: </strong> ' . $bankDetails['iban'] . '</p>';
@@ -489,12 +488,12 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['attachments']['upload']['explanation']['#markup'] = '<p class="description">Please upload one or more attachments</p>';
     $form['attachments']['upload']['file']['#title'] = t('File');
     $form['attachments']['upload']['file']['#type'] = 'file';
-    $form['attachments']['upload']['file']['#description'] = "Via this button files (attachments) can be selected which you would like to add to the Claim. Use the button to 'Upload' to attach each file";
+    $form['attachments']['upload']['file']['#description'] = "Via this button files (attachments) can be selected which you would like to add to the Claim. Use the button 'Upload' to attach each file";
     $form['attachments']['upload']['button']['#type'] = 'submit';
     $form['attachments']['upload']['button']['#value'] = 'Upload';
     $form['attachments']['upload']['button']['#submit'] = array('pum_claims_form_submit_attachments');
     $form['attachments']['upload']['button']['#validate'] = array();
-    $form['attachments']['upload']['button']['#attributes']['title'] = "Via this button files (attachments) can be selected which you would like to add to the Claim. Use the button to 'Upload' to attach each file";
+    $form['attachments']['upload']['button']['#attributes']['title'] = "Via this button files (attachments) can be selected which you would like to add to the Claim. Use the button 'Upload' to attach each file";
 
 
     $form['about_me']['save_button'] = array(
