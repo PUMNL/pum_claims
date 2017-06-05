@@ -484,24 +484,32 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['attachments']['upload']['button']['#validate'] = array();
     $form['attachments']['upload']['button']['#attributes']['title'] = "Via this button files (attachments) can be selected which you would like to add to the Claim. Use the button to 'Upload' to attach each file";
 
-    $form['agree']['#type'] = 'fieldset';
-    $form['agree']['agree']['#type'] = 'checkbox';
-    $form['agree']['agree']['#required'] = FALSE;
-    $form['agree']['agree']['#title'] = 'All items submitted I have filled out in good faith and with all possible attachments.';
 
-    $form['submit_button'] = array(
+    $form['about_me']['save_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#submit' => array('pum_claims_edit_form_submit_save'),
+    '#attributes' => array(
+      'title' => 'Via this button the entered data is only stored',
+      ),
+    );
+
+    $form['agree']['#type'] = 'fieldset';
+    $form['agree']['#title'] = 'Final Submit';
+    $form['agree']['agree']['#markup'] = '<p class="description">All items submitted I have filled out in good faith and with all possible attachments.</p>';
+
+    $form['agree']['submit_button'] = array(
         '#type' => 'submit',
         '#value' => t('Submit'),
+        '#submit' => array('pum_claims_edit_form_submit_save','pum_claims_edit_form_submit_submit'),
         '#attributes' => array(
           'title' => 'Via this button the entered data is stored and forwarded for approval',
         ),
     );
-
-
     return $form;
 }
 
-function pum_claims_edit_form_submit($form, &$form_state) {
+function pum_claims_edit_form_submit_save($form, &$form_state) {
     global $user;
 
     $claim_id = $form_state['values']['claim_id'];
@@ -530,12 +538,14 @@ function pum_claims_edit_form_submit($form, &$form_state) {
     $params['claim_total_amount'] = 0;
     $params['claim_description'] = $form_state['values']['description'];
     $result = civicrm_api3('Claim', 'create', $params);
-    $claim_id = $result['values']['id'];
-    if($form_state['values']['agree']){
-      $result = civicrm_api3('Claim', 'submit', $params);
-    }
-    drupal_goto('portal/claims');
+    //drupal_goto('portal/claims');
     //drupal_goto('portal/claims/'.$claim_id);
+}
+
+function pum_claims_edit_form_submit_submit($form, &$form_state) {
+  $params['id'] = $form_state['values']['claim_id'];
+  $result = civicrm_api3('Claim', 'submit', $params);
+  drupal_goto('portal/claims');
 }
 
 function pum_claims_form_submit_attachments($form, &$form_state) {
@@ -675,7 +685,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['currency']['#description'] = 'Please make a selection from the options in the pull-down menu.';
 
     $form['line']['amount']['#type'] = 'textfield';
-    $form['line']['amount']['#title'] = 'Amount (in currency)'; 
+    $form['line']['amount']['#title'] = 'Amount (in currency)';
     $form['line']['amount']['#required'] = true;
     $form['line']['amount']['#default_value'] = $line['currency_amount'];
     $form['line']['amount']['#element_validate'] = array('element_validate_number');
