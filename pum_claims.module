@@ -174,9 +174,12 @@ function pum_claims_form($form, &$form_state) {
 
     $claim_types = _pum_claims_getClaimTypes();
     $link_options = _pum_claims_getClaimLinksForContact($contact_id);
-
+    if(empty( $link_options)) {
+     unset($claim_types['project']);
+    }
+    
     $form['about_me']['#type'] = 'fieldset';
-    $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
+    $form['about_me']['name']['#markup'] = '<p><strong>NNName: </strong>'.$contact['display_name'].'</p>';
     $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
     $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please send a message with the right data to sectorsupport@pum.nl</em></p>';
     $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
@@ -305,8 +308,13 @@ function pum_claims_view($claim_id) {
 
     $claim_types = _pum_claims_getClaimTypes();
     $link_options = _pum_claims_getClaimLinksForContact($contact_id);
+    watchdog('pum_claims',print_r($link_options,true));
+    if(empty($link_options)){
+       unset($claim_types['project']);
+    }
 
-    $form = array();
+
+  $form = array();
     $form['about_me']['#type'] = 'fieldset';
     $form['about_me']['name']['#markup'] = '<p><strong>Name: </strong>'.$contact['display_name'].'</p>';
     $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
@@ -405,6 +413,10 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
 
     $claim_types = _pum_claims_getClaimTypes();
     $link_options = _pum_claims_getClaimLinksForContact($contact_id);
+    watchdog('pum_claims',print_r($link_options,true));
+    if(empty($link_options)){
+       unset($claim_types['project']);
+    }
 
     $form['claim_id']['#type'] = 'hidden';
     $form['claim_id']['#value'] = $claim_id;
@@ -502,6 +514,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         '#type' => 'submit',
         '#value' => t('Submit'),
         '#submit' => array('pum_claims_edit_form_submit_save','pum_claims_edit_form_submit_submit'),
+        '#validate' => array('pum_claims_edit_form_submit_submit_validate'),
         '#attributes' => array(
           'title' => 'Via this button the entered data is stored and forwarded for approval',
         ),
@@ -546,6 +559,16 @@ function pum_claims_edit_form_submit_submit($form, &$form_state) {
   $params['id'] = $form_state['values']['claim_id'];
   $result = civicrm_api3('Claim', 'submit', $params);
   drupal_goto('portal/claims');
+}
+
+function pum_claims_edit_form_submit_submit_validate($form, &$form_state){
+  civicrm_initialize();
+  $claim_id = $form_state['values']['claim_id'];
+  $sqlParams[1] = array($claim_id, 'Integer');
+  $countProcessed = CRM_Core_DAO::singleValueQuery("SELECT COUNT(1) FROM pum_claim_line WHERE activity_id = %1", $sqlParams);
+  if($countProcessed==0) {
+    form_set_error('lines', 'An expense claim needs to have at least one line');
+  }
 }
 
 function pum_claims_form_submit_attachments($form, &$form_state) {
