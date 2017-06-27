@@ -320,7 +320,7 @@ function pum_claims_view($claim_id) {
       $form['about_me']['link']['#markup'] = '<p><strong>Link:</strong> ' . $link_options[$claim['claim_linked_to']] . '</p>';
     }
     if(isset($claim['claim_description'])) {
-      $form['about_me']['description']['#markup'] = '<p><strong>Description:</strong> ' . $claim['claim_description'] . '</p>';
+      $form['about_me']['description']['#markup'] = '<p><strong>Remark:</strong> ' . $claim['claim_description'] . '</p>';
     }
 
     $form['lines']['#type'] = 'fieldset';
@@ -334,7 +334,7 @@ function pum_claims_view($claim_id) {
             'Amount',
             'Amount submitted',
             'Amount approved',
-            'Description',
+            'Remark',
         );
         $form['lines']['table']['#attributes'] = array('width' => '100%');
         $form['lines']['table']['#rows'] = $lineitemRows;
