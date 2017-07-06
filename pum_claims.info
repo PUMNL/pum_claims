@@ -1,5 +1,5 @@
 name = PUM claims
-description = Functionality for submitting claim entries.
+description = Submitting claim expense entries (1.0).
 core = 7.x
 version = "7.x-1.0"
 package = PUM
