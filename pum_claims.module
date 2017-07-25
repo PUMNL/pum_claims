@@ -498,7 +498,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
 
     $form['agree']['#type'] = 'fieldset';
     $form['agree']['#title'] = 'Final Submit';
-    $form['agree']['agree']['#markup'] = '<p class="description">By submitting this claim, I declare that I have filled out all items in good faith and with all possible attachments.</p>';
+    $form['agree']['agree']['#markup'] = '<p class="description">By submitting this claim, I declare that I have filled out all items fully, truthfully and with all possible attachments.</p>';
 
     $form['agree']['submit_button'] = array(
         '#type' => 'submit',
