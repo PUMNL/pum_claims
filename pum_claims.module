@@ -17,43 +17,43 @@ function pum_claims_menu() {
         'title' => 'Edit claim',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_edit_form', 2),
-        'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(pum_claims_get_roles_who_can_access()),
+        'access callback' => 'pum_claims_user_has_role_and_is_on_activity',
+        'access arguments' => array(pum_claims_get_roles_who_can_access(), 2),
     );
     $items['portal/view-claim/%'] = array(
         'title' => 'View claim',
         'page callback' => 'pum_claims_view',
         'page arguments' => array(2),
-        'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(pum_claims_get_roles_who_can_access()),
+        'access callback' => 'pum_claims_user_has_role_and_is_on_activity',
+        'access arguments' => array(pum_claims_get_roles_who_can_access(), 2),
     );
     $items['portal/claims/%/add-line'] = array(
         'title' => 'Submit a new claim line',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_line_form', 2),
-        'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(pum_claims_get_roles_who_can_access()),
+        'access callback' => 'pum_claims_user_has_role_and_is_on_activity',
+        'access arguments' => array(pum_claims_get_roles_who_can_access(), 2),
     );
     $items['portal/claims/%/edit-line/%'] = array(
         'title' => 'Edit a claim line',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('pum_claims_line_form', 2, 4),
-        'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(pum_claims_get_roles_who_can_access()),
+        'access callback' => 'pum_claims_user_has_role_and_is_on_activity',
+        'access arguments' => array(pum_claims_get_roles_who_can_access(), 2),
     );
     $items['portal/claims/%/remove-line/%'] = array(
         'title' => 'Submit a new claim line',
         'page callback' => 'pum_claims_remove_line',
         'page arguments' => array(2, 4),
-        'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(pum_claims_get_roles_who_can_access()),
+        'access callback' => 'pum_claims_user_has_role_and_is_on_activity',
+        'access arguments' => array(pum_claims_get_roles_who_can_access(), 2),
     );
     $items['portal/claims/%/remove-attachment/%'] = array(
         'title' => 'Remove attachment',
         'page callback' => 'pum_claims_remove_attachment',
         'page arguments' => array(2, 4),
-        'access callback' => 'pum_claims_user_has_role',
-        'access arguments' => array(pum_claims_get_roles_who_can_access()),
+        'access callback' => 'pum_claims_user_has_role_and_is_on_activity',
+        'access arguments' => array(pum_claims_get_roles_who_can_access(), 2),
     );
     $items['portal/claims/convert_currency'] = array(
         'title' => 'Convert currency',
@@ -787,7 +787,7 @@ function pum_claims_user_has_role($roles = array())
 {
     global $user;
     if (in_array('administrator', $user->roles)) {
-        return true;
+        return TRUE;
     }
     foreach ($roles as $role) {
         if (in_array($role, $user->roles)) {
@@ -795,6 +795,42 @@ function pum_claims_user_has_role($roles = array())
         }
     }
     return FALSE;
+}
+
+/**
+ * Returns true when a user is the source contact of the activity.
+ *
+ * @param $activity_id
+ * @return bool
+ */
+function pum_claims_user_has_role_on_activity($activity_id) {
+  civicrm_initialize();
+  $session = CRM_Core_Session::singleton();
+  $contact_id = $session->get('userID');
+  $activity = civicrm_api3('Activity', 'getsingle', array('id' => $activity_id));
+  if (!empty($activity['source_contact_id']) && $activity['source_contact_id'] == $contact_id) {
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+/**
+ * Returns true when the user has a certain drupal role and is connected to the
+ * activity
+ *
+ * @param $roles
+ * @param $activity_id
+ * @return bool
+ */
+function pum_claims_user_has_role_and_is_on_activity($roles, $activity_id) {
+  if (!pum_claims_user_has_role($roles)) {
+    return FALSE;
+  }
+  if (!pum_claims_user_has_role_on_activity($activity_id)) {
+    return FALSE;
+  }
+  return TRUE;
 }
 
 function pum_claims_get_role_ids($roles) {
