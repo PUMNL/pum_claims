@@ -93,15 +93,37 @@ function _pum_claims_view_edit_claim_link($claim_id) {
 }
 
 function pum_claims_is_claim_editable($claim_id) {
-
     civicrm_initialize();
-    $sqlParams[1] = array($claim_id, 'Integer');
-    $countProcessed = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) FROM pum_claim_log WHERE claim_activity_id = %1", $sqlParams);
-    if ($countProcessed) {
-        return false;
-    } else {
-      return true;
+
+    $sqlParams = array(1=>array($claim_id, 'Integer'));
+
+    $claims = CRM_Core_DAO::executeQuery("SELECT DISTINCT act.id,act.activity_type_id,act.activity_date_time,act.status_id, cl.approval_contact_id, cl.processed_date, cl.is_approved, cl.is_rejected, cl.is_payable, appct.display_name AS 'approval_contact', ov1.label AS 'status_old_claims', ov2.label AS 'status_new_claims'
+                                          FROM civicrm_activity act
+                                          LEFT JOIN civicrm_activity_contact ac ON ac.activity_id = act.id
+                                          LEFT JOIN pum_claim_log cl ON cl.claim_activity_id = act.id
+                                          LEFT JOIN civicrm_contact appct ON appct.id = cl.approval_contact_id
+                                          LEFT JOIN civicrm_value_claiminformation_70 ci ON ci.entity_id = act.id
+                                          LEFT JOIN civicrm_option_value ov1 ON ov1.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'activity_status') AND ov1.value = act.status_id
+                                          LEFT JOIN civicrm_option_value ov2 ON ov2.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'pum_claim_status') AND ov2.value = ci.pum_claim_status
+                                          WHERE act.activity_type_id = (SELECT value FROM civicrm_option_value ov WHERE ov.label = 'Claim' AND ov.option_group_id = (SELECT id FROM civicrm_option_group og WHERE og.name = 'activity_type')) AND act.is_current_revision = 1
+                                          AND act.id = %1
+                                          ORDER BY act.activity_date_time DESC", $sqlParams);
+
+    //As from July 31, 2017 claims are handled different, so that's why we have an old status (for old claims) and new status (for new claims)
+    if ($claims->fetch() && (!empty($claims->status_old_claims) | !empty($claims->status_new_claims))) {
+      if($claims->status_old_claims == 'Scheduled' && $claims->status_new_claims == NULL && $claims->approval_contact_id == NULL) {
+        //Old claim which is not submitted, so claim should be editable
+        return TRUE;
+      } elseif($claims->status_old_claims == 'Scheduled' && $claims->approval_contact_id == NULL) {
+        //New claim which is not submitted, so claim should be editable
+        return TRUE;
+      } else {
+        //In all other cases claim should not be editable
+        return FALSE;
+      }
     }
+    //By default claim is not editable
+    return FALSE;
 }
 
 function pum_claims_is_claim_approved($claim_id){
