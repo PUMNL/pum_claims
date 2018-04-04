@@ -195,7 +195,7 @@ function pum_claims_form($form, &$form_state) {
     }
 
     $claim_types = _pum_claims_getClaimTypes();
-    $link_options = _pum_claims_getClaimLinksForContact($contact_id);
+    $link_options = _pum_claims_getClaimLinksForContact($contact_id, FALSE); //FALSE: Completed links should not be visible in submit new claim screen
     if(empty( $link_options)) {
      unset($claim_types['project']);
     }
@@ -323,8 +323,8 @@ function pum_claims_view($claim_id) {
     }
 
     $claim_types = _pum_claims_getClaimTypes();
-    $link_options = _pum_claims_getClaimLinksForContact($contact_id);
-    watchdog('pum_claims',print_r($link_options,true));
+    $link_options = _pum_claims_getClaimLinksForContact($contact_id, TRUE); //TRUE: Completed links should be visible in view claim screen
+
     if(empty($link_options)){
        unset($claim_types['project']);
     }
@@ -430,7 +430,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     }
 
     $claim_types = _pum_claims_getClaimTypes();
-    $link_options = _pum_claims_getClaimLinksForContact($contact_id);
+    $link_options = _pum_claims_getClaimLinksForContact($contact_id, FALSE); //FALSE: Completed links should not be visible in edit new claim screen
     if(empty($link_options)){
        unset($claim_types['project']);
     }
@@ -904,8 +904,8 @@ function _pum_claims_getClaimTypes() {
  * @param int $contact_id
  * @return array
  */
-function _pum_claims_getClaimLinksForContact($contact_id) {
-    return CRM_Expenseclaims_Utils::getClaimLinksForContact($contact_id);
+function _pum_claims_getClaimLinksForContact($contact_id, $manageClaim=FALSE) {
+    return CRM_Expenseclaims_Utils::getClaimLinksForContact($contact_id, $manageClaim);
 }
 
 /**
