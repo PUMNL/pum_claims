@@ -52,9 +52,9 @@ $handler->display->display_options['relationships']['drupal_id']['required'] = T
 $handler->display->display_options['fields']['id']['id'] = 'id';
 $handler->display->display_options['fields']['id']['table'] = 'civicrm_activity';
 $handler->display->display_options['fields']['id']['field'] = 'id';
-$handler->display->display_options['fields']['id']['separator'] = '';
 $handler->display->display_options['fields']['id']['exclude'] = TRUE;
-/* Field: CiviCRM Activities: Activity Status */
+$handler->display->display_options['fields']['id']['separator'] = '';
+/* Field: CiviCRM Custom: Claiminformation: Claim Status */
 $handler->display->display_options['fields']['status']['id'] = 'status';
 $handler->display->display_options['fields']['status']['table'] = $claimInformationCustomGroup['table_name'];
 $handler->display->display_options['fields']['status']['field'] = $claimStatusCustomField['column_name'];
@@ -90,14 +90,28 @@ $handler->display->display_options['fields']['amount_approved']['label'] = 'Amou
 $handler->display->display_options['fields']['amount_approved']['element_label_colon'] = FALSE;
 $handler->display->display_options['fields']['amount_approved']['use_php_setup'] = 0;
 $handler->display->display_options['fields']['amount_approved']['php_output'] = '<?php $approved_amount = pum_claims_get_amount_approved($row->id); if ($approved_amount) { echo "&euro; " . number_format($approved_amount, 2, \'.\', \',\'); } ?>';
-/* Field: Global: PHP */
+/* Field: View-edit claim link */
 $handler->display->display_options['fields']['php']['id'] = 'php';
 $handler->display->display_options['fields']['php']['table'] = 'views';
 $handler->display->display_options['fields']['php']['field'] = 'php';
+$handler->display->display_options['fields']['php']['ui_name'] = 'View-edit claim link';
 $handler->display->display_options['fields']['php']['label'] = '';
 $handler->display->display_options['fields']['php']['element_label_colon'] = FALSE;
 $handler->display->display_options['fields']['php']['use_php_setup'] = 0;
 $handler->display->display_options['fields']['php']['php_output'] = '<?php _pum_claims_view_edit_claim_link($row->id); ?>';
+$handler->display->display_options['fields']['php']['use_php_click_sortable'] = '0';
+$handler->display->display_options['fields']['php']['php_click_sortable'] = '';
+/* Field: Delete claim link */
+$handler->display->display_options['fields']['php_1']['id'] = 'php_1';
+$handler->display->display_options['fields']['php_1']['table'] = 'views';
+$handler->display->display_options['fields']['php_1']['field'] = 'php';
+$handler->display->display_options['fields']['php_1']['ui_name'] = 'Delete claim link';
+$handler->display->display_options['fields']['php_1']['label'] = '';
+$handler->display->display_options['fields']['php_1']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['php_1']['use_php_setup'] = 0;
+$handler->display->display_options['fields']['php_1']['php_output'] = '<?php _pum_claims_delete_claim_link($row->id); ?>';
+$handler->display->display_options['fields']['php_1']['use_php_click_sortable'] = '0';
+$handler->display->display_options['fields']['php_1']['php_click_sortable'] = '';
 /* Sort criterion: CiviCRM Activities: Scheduled Activity Date */
 $handler->display->display_options['sorts']['activity_date_time']['id'] = 'activity_date_time';
 $handler->display->display_options['sorts']['activity_date_time']['table'] = 'civicrm_activity';
