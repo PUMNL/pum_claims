@@ -54,12 +54,26 @@ $handler->display->display_options['fields']['id']['table'] = 'civicrm_activity'
 $handler->display->display_options['fields']['id']['field'] = 'id';
 $handler->display->display_options['fields']['id']['exclude'] = TRUE;
 $handler->display->display_options['fields']['id']['separator'] = '';
-/* Field: CiviCRM Custom: Claiminformation: Claim Status */
+/* Field: Hidden: CiviCRM Custom: Claiminformation: Claim Status */
 $handler->display->display_options['fields']['status']['id'] = 'status';
 $handler->display->display_options['fields']['status']['table'] = $claimInformationCustomGroup['table_name'];
 $handler->display->display_options['fields']['status']['field'] = $claimStatusCustomField['column_name'];
+$handler->display->display_options['fields']['status']['ui_name'] = 'Hidden: CiviCRM Custom: Claiminformation: Claim Status';
+$handler->display->display_options['fields']['status']['exclude'] = TRUE;
 $handler->display->display_options['fields']['status']['alter']['nl2br'] = TRUE;
 $handler->display->display_options['fields']['status']['alter']['strip_tags'] = TRUE;
+/* Field: PHP: CiviCRM Custom: Claiminformation: Claim Status */
+$handler->display->display_options['fields']['php_2']['id'] = 'php_2';
+$handler->display->display_options['fields']['php_2']['table'] = 'views';
+$handler->display->display_options['fields']['php_2']['field'] = 'php';
+$handler->display->display_options['fields']['php_2']['ui_name'] = 'PHP: CiviCRM Custom: Claiminformation: Claim Status';
+$handler->display->display_options['fields']['php_2']['label'] = 'Claim Status';
+$handler->display->display_options['fields']['php_2']['use_php_setup'] = 0;
+$handler->display->display_options['fields']['php_2']['php_output'] = '<?php
+_pum_claims_view_show_status($row->id);
+?>';
+$handler->display->display_options['fields']['php_2']['use_php_click_sortable'] = '0';
+$handler->display->display_options['fields']['php_2']['php_click_sortable'] = '';
 /* Field: CiviCRM Activities: Scheduled Activity Date */
 $handler->display->display_options['fields']['activity_date_time']['id'] = 'activity_date_time';
 $handler->display->display_options['fields']['activity_date_time']['table'] = 'civicrm_activity';
@@ -68,7 +82,7 @@ $handler->display->display_options['fields']['activity_date_time']['label'] = 'E
 $handler->display->display_options['fields']['activity_date_time']['date_format'] = 'custom';
 $handler->display->display_options['fields']['activity_date_time']['custom_date_format'] = 'Y-m-d';
 $handler->display->display_options['fields']['activity_date_time']['second_date_format'] = 'long';
-/* Field: CiviCRM Custom: Claiminformation: Total Amount */
+/* Field: CiviCRM Custom: Claiminformation: Description */
 $handler->display->display_options['fields']['description']['id'] = 'description';
 $handler->display->display_options['fields']['description']['table'] = $claimInformationCustomGroup['table_name'];
 $handler->display->display_options['fields']['description']['field'] = $descriptionCustomField['column_name'];
