@@ -886,6 +886,13 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
 
 function pum_claims_line_form_validate($form, &$form_state) {
     try {
+      $types = _pum_claims_getClaimLineTypes();
+      $key_voorschotten = array_search('Voorschotten', $types);
+
+      if($form_state['values']['type'] == $key_voorschotten && (!is_int((int)$form_state['values']['amount']) | $form_state['values']['amount'] > 0)) {
+        form_set_error('amount', 'Amount for claim line type "Voorschotten" should be a negative value put a dash (-) before the number');
+      }
+
       $expense_date = new DateTime($form_state['values']['expense_date']);
       $now = new DateTime();
       if ($expense_date > $now) {
