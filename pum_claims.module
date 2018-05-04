@@ -90,25 +90,49 @@ function pum_claims_views_default_views() {
 }
 
 function _pum_claims_view_show_status($claim_id) {
-  if (!empty($claim_id) && pum_claims_is_claim_editable($claim_id)) {
-    echo "Not submitted";
-  } else {
-    civicrm_initialize();
-    try {
-      if (!empty($claim_id)) {
-        $params = array(
-          'version' => 3,
-          'sequential' => 1,
-          'activity_id' => $claim_id,
-        );
-        $result = civicrm_api3('Claim', 'getsingle', $params);
-      }
 
-      if(!empty($result['claim_status'])) {
-        echo $result['claim_status'];
+  if (!empty($claim_id)) {
+    if (pum_claims_is_claim_editable($claim_id)) {
+      echo "Not submitted";
+    } else {
+      try {
+        /*
+        //With API Call (takes 2,5 sec):
+        if (!empty($claim_id)) {
+          $params = array(
+            'version' => 3,
+            'sequential' => 1,
+            'activity_id' => $claim_id,
+          );
+          $result = civicrm_api3('Claim', 'getsingle', $params);
+        }
+
+        if(!empty($result['claim_status'])) {
+          echo $result['claim_status'];
+        }
+      */
+
+        //With Query (takes 50ms):
+        $sql = "SELECT act.id, ov.label AS 'old_claims_status', ov2.label AS 'new_claims_status' FROM civicrm_activity act
+                LEFT JOIN civicrm_value_claiminformation_70 ci ON ci.entity_id = act.id
+                LEFT JOIN civicrm_option_value ov ON ov.value = act.status_id AND ov.option_group_id = (SELECT id FROM civicrm_option_group og WHERE og.name = 'activity_status')
+                LEFT JOIN civicrm_option_value ov2 ON ov2.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'pum_claim_status') AND ov2.value = ci.pum_claim_status
+                WHERE act.id = %1";
+        $status = CRM_Core_DAO::executeQuery($sql,array(1 => array((int)$claim_id, 'Integer')));
+        if ($status->fetch()) {
+          if (!empty($status->new_claims_status)) {
+            echo $status->new_claims_status;
+          } else if (!empty($status->old_claims_status)) {
+            echo $status->old_claims_status;
+          } else {
+            echo "N/A";
+          }
+        }
+
+      } catch (Exception $ex) {
+      // catch (CiviCRM_API3_Exception $ex) {
+        //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
       }
-    } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
   }
 }
@@ -132,11 +156,9 @@ function _pum_claims_delete_claim_link($claim_id) {
 }
 
 function pum_claims_is_claim_editable($claim_id) {
-    civicrm_initialize();
-
     $sqlParams = array(1=>array($claim_id, 'Integer'));
 
-    $claims = CRM_Core_DAO::executeQuery("SELECT DISTINCT act.id,act.activity_type_id,act.activity_date_time,act.status_id, cl.approval_contact_id, cl.processed_date, cl.is_approved, cl.is_rejected, cl.is_payable, appct.display_name AS 'approval_contact', ov1.label AS 'status_old_claims', ov2.label AS 'status_new_claims'
+    $claims = CRM_Core_DAO::executeQuery("SELECT DISTINCT act.id,cl.approval_contact_id, ov1.label AS 'status_old_claims', ov2.label AS 'status_new_claims'
                                           FROM civicrm_activity act
                                           LEFT JOIN civicrm_activity_contact ac ON ac.activity_id = act.id
                                           LEFT JOIN pum_claim_log cl ON cl.claim_activity_id = act.id
@@ -166,12 +188,11 @@ function pum_claims_is_claim_editable($claim_id) {
 }
 
 function pum_claims_is_claim_approved($claim_id){
-    civicrm_initialize();
     $claim = array();
     try {
       $claim = civicrm_api3('Claim','getsingle',array('id'=>$claim_id));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     $config =  CRM_Expenseclaims_Config::singleton();
     if(!empty($claim['claim_status_id']) && ($claim['claim_status_id']==$config->getInitiallyApprovedClaimStatusValue() || $claim['claim_status_id']==$config->getApprovedClaimStatusValue())) {
@@ -183,16 +204,24 @@ function pum_claims_is_claim_approved($claim_id){
 
 function pum_claims_get_amount_submitted($claim_id) {
   $lines = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line WHERE activity_id = %1", array(1=>array($claim_id, 'Integer')));
-  $original_amount = 0.00;
-  while ($lines->fetch()) {
-    $original_line_amount = $lines->euro_amount;
-    $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 ORDER BY changed_date DESC LIMIT 1", array(1=>array($lines->id, 'Integer')));
-    if ($line_log_items->fetch() && isset($line_log_items->old_euro_amount)) {
-      $original_line_amount = $line_log_items->old_euro_amount;
+  $totalAmount = 0.00;
+  if($lines->N == 0) {
+    $totalAmount = CRM_Core_DAO::singleValueQuery(
+      "SELECT total_expenses_389 FROM civicrm_value_claiminformation_70 ci LEFT JOIN pum_claim_log cl ON cl.claim_activity_id = ci.entity_id WHERE ci.entity_id = %1",
+      array(1=>array($claim_id, 'Integer'))
+    );
+  } else {
+    while ($lines->fetch()) {
+      $original_line_amount = $lines->euro_amount;
+      $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 ORDER BY changed_date DESC LIMIT 1", array(1=>array($lines->id, 'Integer')));
+      if ($line_log_items->fetch() && isset($line_log_items->old_euro_amount)) {
+        $original_line_amount = $line_log_items->old_euro_amount;
+      }
+      $totalAmount = $totalAmount + $original_line_amount;
     }
-    $original_amount = $original_amount + $original_line_amount;
   }
-  return $original_amount;
+
+  return $totalAmount;
 }
 
 function pum_claims_get_amount_approved($claim_id) {
@@ -203,11 +232,21 @@ function pum_claims_get_amount_approved($claim_id) {
     return null;
   }
 
-  $lines = _pum_claims_getClaimLines($claim_id);
   $totalAmount = 0.00;
-  foreach($lines as $line) {
-    $totalAmount = $totalAmount + ((float) $line['euro_amount']);
+  $lines = array();
+  $lines = _pum_claims_getClaimLines($claim_id);
+
+  if (empty($lines)) {
+    $totalAmount = CRM_Core_DAO::singleValueQuery(
+      "SELECT total_expenses_389 FROM civicrm_value_claiminformation_70 ci LEFT JOIN pum_claim_log cl ON cl.claim_activity_id = ci.entity_id WHERE ci.entity_id = %1",
+      array(1=>array($claim_id, 'Integer'))
+    );
+  } else {
+    foreach($lines as $line) {
+      $totalAmount = $totalAmount + ((float) $line['euro_amount']);
+    }
   }
+
   return $totalAmount;
 }
 
@@ -219,7 +258,7 @@ function pum_claims_convert_currency() {
     try {
       $result = civicrm_api3('Currency', 'Convert', array('currency_id' => $currency_id, 'amount' => $amount, 'conversion_date' => $conversion_date->format('Ymd')));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     echo number_format($result['euro_amount'], 2, ',', '.');
     exit();
@@ -235,7 +274,7 @@ function pum_claims_form($form, &$form_state) {
       ));
       $contact = civicrm_api3('Contact', 'getsingle', array('id' => $contact_id));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     $bankDetails = _pum_claims_getBankDetailsOfContact($contact_id);
 
@@ -294,7 +333,7 @@ function pum_claims_form_submit($form, &$form_state) {
           'return' => 'contact_id'
       ));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 
     $expenseDate = new DateTime();
@@ -308,7 +347,7 @@ function pum_claims_form_submit($form, &$form_state) {
     try {
       $result = civicrm_api3('Claim', 'create', $params);
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     $claim_id = $result['values']['id'];
     drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
@@ -350,11 +389,11 @@ function pum_claims_removal_form_submit($form, &$form_state) {
         drupal_set_message('Your claim has been removed','status', FALSE);
         drupal_goto('portal/claims');
       } else {
-        watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $remove_claim, TRUE)), WATCHDOG_ERROR,'');
+        //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $remove_claim, TRUE)), WATCHDOG_ERROR,'');
         drupal_set_message('An error occurred while deleting your claim, please contact helpdesk.', 'error', FALSE);
       }
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
       drupal_set_message('An error occurred while deleting your claim, please contact helpdesk.', 'error', FALSE);
     }
   }
@@ -370,7 +409,7 @@ function pum_claims_view($claim_id) {
             'return' => 'contact_id'
         ));
       } catch (CiviCRM_API3_Exception $ex) {
-        watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+        //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
       }
 
       drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
@@ -379,7 +418,7 @@ function pum_claims_view($claim_id) {
       try {
         $claim = civicrm_api3('Claim', 'getsingle', array('id' => $claim_id));
       } catch (CiviCRM_API3_Exception $ex) {
-        watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+        //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
       }
       $attachmentRows = array();
       $attachments = CRM_Core_BAO_File::getEntityFile('civicrm_activity', $claim_id);
@@ -402,7 +441,7 @@ function pum_claims_view($claim_id) {
           try {
             $lineLogItems = civicrm_api3('ClaimLineLog', 'get', array('claim_line_id' => $line['id'], 'options' => array('limit' => 0)));
           } catch (CiviCRM_API3_Exception $ex) {
-            watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+            //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
           }
           foreach ($lineLogItems['values'] as $lineLogItem) {
             $logDate = new DateTime($lineLogItem['changed_date']);
@@ -431,7 +470,7 @@ function pum_claims_view($claim_id) {
       try {
         $contact = civicrm_api3('Contact', 'getsingle', array('id' => $contact_id));
       } catch (CiviCRM_API3_Exception $ex) {
-        watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+        //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
       }
       $bankDetails = _pum_claims_getBankDetailsOfContact($contact_id);
 
@@ -491,7 +530,7 @@ function pum_claims_view($claim_id) {
       }
     } catch (Exception $ex) {
       drupal_set_message('Unable to retrieve claim information, please contact helpdesk', 'error', FALSE);
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 
     return $form;
@@ -513,7 +552,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
 
       $claim = civicrm_api3('Claim', 'getsingle', array('id' => $claim_id));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 
     $attachmentRows = array();
@@ -548,7 +587,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     try {
       $contact = civicrm_api3('Contact', 'getsingle', array('id' => $contact_id));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     $bankDetails = _pum_claims_getBankDetailsOfContact($contact_id);
 
@@ -678,7 +717,7 @@ function pum_claims_edit_form_submit_save($form, &$form_state) {
           'return' => 'contact_id'
       ));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 
     $expenseDate = new DateTime();
@@ -697,7 +736,7 @@ function pum_claims_edit_form_submit_save($form, &$form_state) {
     try{
       $result = civicrm_api3('Claim', 'create', $params);
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     //drupal_goto('portal/claims');
     //drupal_goto('portal/claims/'.$claim_id);
@@ -708,7 +747,7 @@ function pum_claims_edit_form_submit_submit($form, &$form_state) {
     $params['id'] = $form_state['values']['claim_id'];
     $result = civicrm_api3('Claim', 'submit', $params);
   } catch (CiviCRM_API3_Exception $ex) {
-    watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+    //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
   }
   drupal_goto('portal/claims');
 }
@@ -924,7 +963,7 @@ function pum_claims_line_form_submit($form, &$form_state) {
           'conversion_date' => $expenseDate ->format('Ymd')
       ));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 
     $params['activity_id'] = $claim_id;
@@ -938,7 +977,7 @@ function pum_claims_line_form_submit($form, &$form_state) {
     try {
       civicrm_api3('ClaimLine', 'create', $params);
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
 }
@@ -952,7 +991,7 @@ function pum_claims_remove_line($claim_id, $line_id) {
     try {
       $result = civicrm_api3('ClaimLine', 'Delete', array('id' => $line_id));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
 }
@@ -991,7 +1030,7 @@ function pum_claims_user_has_role_on_activity($activity_id) {
   try{
     $activity = civicrm_api3('Activity', 'getsingle', array('id' => $activity_id));
   } catch (CiviCRM_API3_Exception $ex) {
-    watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+    //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
   }
   if (!empty($activity['source_contact_id']) && $activity['source_contact_id'] == $contact_id) {
     return TRUE;
@@ -1110,7 +1149,7 @@ function _pum_claims_getClaimLines($claim_id) {
           $lines[] = $line;
       }
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
     return $lines;
 }
@@ -1130,7 +1169,7 @@ function _pum_claims_updateBankDetailsOfContact($contact_id, $bank, $iban, $bic)
     try {
       civicrm_api3('Contact', 'create', $params);
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 }
 
@@ -1147,7 +1186,7 @@ function _pum_claims_getBankDetailsOfContact($contact_id) {
           'return' => array('custom_'.$bankNameCustomFieldId, 'custom_'.$IBANCustomFieldId, 'custom_'.$BICCustomFieldId),
       ));
     } catch (CiviCRM_API3_Exception $ex) {
-      watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 
     $return['bank'] = '';
