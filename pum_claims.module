@@ -744,8 +744,29 @@ function pum_claims_edit_form_submit_save($form, &$form_state) {
 
 function pum_claims_edit_form_submit_submit($form, &$form_state) {
   try {
-    $params['id'] = $form_state['values']['claim_id'];
+    //Submit claim
+    $params = array('id' => $form_state['values']['claim_id']);
     $result = civicrm_api3('Claim', 'submit', $params);
+
+    //Send E-mail to contact
+    $session = CRM_Core_Session::singleton();
+    $contact_id = $session->get('userID');
+
+    $params_template = array('msg_title' => 'claim_received');
+    $result_template = civicrm_api3('MessageTemplate', 'get', $params_template);
+
+    if($result['is_error'] == 0) {
+      //mail claim received
+      $params_email = array(
+        'version' => 3,
+        'sequential' => 1,
+        'contact_id' => $contact_id,
+        'template_id' => $result_template['id'],
+        'from_name' => 'PUM Netherlands senior experts',
+        'from_email' => 'noreply@pum.nl',
+      );
+      $result_email = civicrm_api3('Email', 'send', $params_email);
+    }
   } catch (CiviCRM_API3_Exception $ex) {
     //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
   }
