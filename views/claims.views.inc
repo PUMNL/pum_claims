@@ -52,7 +52,7 @@ $handler->display->display_options['relationships']['drupal_id']['required'] = T
 $handler->display->display_options['fields']['id']['id'] = 'id';
 $handler->display->display_options['fields']['id']['table'] = 'civicrm_activity';
 $handler->display->display_options['fields']['id']['field'] = 'id';
-$handler->display->display_options['fields']['id']['exclude'] = TRUE;
+$handler->display->display_options['fields']['id']['label'] = 'Claim ID';
 $handler->display->display_options['fields']['id']['separator'] = '';
 /* Field: Hidden: CiviCRM Custom: Claiminformation: Claim Status */
 $handler->display->display_options['fields']['status']['id'] = 'status';
