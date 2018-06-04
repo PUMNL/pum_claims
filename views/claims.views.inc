@@ -82,12 +82,6 @@ $handler->display->display_options['fields']['activity_date_time']['label'] = 'E
 $handler->display->display_options['fields']['activity_date_time']['date_format'] = 'custom';
 $handler->display->display_options['fields']['activity_date_time']['custom_date_format'] = 'Y-m-d';
 $handler->display->display_options['fields']['activity_date_time']['second_date_format'] = 'long';
-/* Field: CiviCRM Custom: Claiminformation: Description */
-$handler->display->display_options['fields']['description']['id'] = 'description';
-$handler->display->display_options['fields']['description']['table'] = $claimInformationCustomGroup['table_name'];
-$handler->display->display_options['fields']['description']['field'] = $descriptionCustomField['column_name'];
-$handler->display->display_options['fields']['description']['alter']['nl2br'] = TRUE;
-$handler->display->display_options['fields']['description']['alter']['strip_tags'] = TRUE;
 /* Field: Global: PHP */
 $handler->display->display_options['fields']['amount_submitted']['id'] = 'amount_submitted';
 $handler->display->display_options['fields']['amount_submitted']['table'] = 'views';
@@ -104,6 +98,16 @@ $handler->display->display_options['fields']['amount_approved']['label'] = 'Amou
 $handler->display->display_options['fields']['amount_approved']['element_label_colon'] = FALSE;
 $handler->display->display_options['fields']['amount_approved']['use_php_setup'] = 0;
 $handler->display->display_options['fields']['amount_approved']['php_output'] = '<?php $approved_amount = pum_claims_get_amount_approved($row->id); if ($approved_amount) { echo "&euro; " . number_format($approved_amount, 2, \'.\', \',\'); } ?>';
+/* Field: Custom claiminformation description */
+$handler->display->display_options['fields']['php_3']['id'] = 'php_3';
+$handler->display->display_options['fields']['php_3']['table'] = 'views';
+$handler->display->display_options['fields']['php_3']['field'] = 'php';
+$handler->display->display_options['fields']['php_3']['ui_name'] = 'Custom claiminformation description';
+$handler->display->display_options['fields']['php_3']['label'] = 'Description';
+$handler->display->display_options['fields']['php_3']['use_php_setup'] = 0;
+$handler->display->display_options['fields']['php_3']['php_output'] = '<?php _pum_claims_view_description($row->id); ?>';
+$handler->display->display_options['fields']['php_3']['use_php_click_sortable'] = '0';
+$handler->display->display_options['fields']['php_3']['php_click_sortable'] = '';
 /* Field: View-edit claim link */
 $handler->display->display_options['fields']['php']['id'] = 'php';
 $handler->display->display_options['fields']['php']['table'] = 'views';

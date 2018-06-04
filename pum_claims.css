@@ -18,3 +18,15 @@
 #pum-claims-line-form .form-item-expense-date-date .description {
     display: none;
 }
+
+#pum-claims-remark {
+  background-color:#F57B20;
+  color:#483493;
+  height:auto;
+  min-height:50px;
+  padding:10px 10px 10px 10px;
+  margin-bottom: 10px;
+}
+#pum-claims-remark #pum-claims-remark-description {
+  color: #FFFFFF;
+}
