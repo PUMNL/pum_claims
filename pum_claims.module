@@ -117,21 +117,23 @@ function _pum_claims_view_show_status($claim_id) {
 }
 
 function _pum_claims_view_description($claim_id) {
-  if (pum_claims_is_claim_editable($claim_id)) {
-    try{
-      $sql = "SELECT description_391 AS 'description', ov.label AS 'pum_claim_status' FROM civicrm_value_claiminformation_70 ci
-              LEFT JOIN civicrm_option_value ov ON ov.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'pum_claim_status') AND ov.value = ci.pum_claim_status
-              WHERE ci.entity_id = %1
-              LIMIT 1";
-      $claim = CRM_Core_DAO::executeQuery($sql,array(1 => array((int)$claim_id, 'Integer')));
-      if ($claim->fetch()) {
-        if ($claim->pum_claim_status == 'Waiting For Correction' && !empty($claim->description)) {
-          echo $claim->description;
-        }
-      }
-    } catch (Exception $ex) {
+  try {
+    $description = '';
 
+    $sql = "SELECT description_391 AS 'description', ov.label AS 'pum_claim_status' FROM civicrm_value_claiminformation_70 ci
+            LEFT JOIN civicrm_option_value ov ON ov.option_group_id = (SELECT id FROM civicrm_option_group WHERE name = 'pum_claim_status') AND ov.value = ci.pum_claim_status
+            WHERE ci.entity_id = %1
+            LIMIT 1";
+    $claim = CRM_Core_DAO::executeQuery($sql,array(1 => array((int)$claim_id, 'Integer')));
+    if ($claim->fetch()) {
+      if (($claim->pum_claim_status == 'Waiting For Correction' | $claim->pum_claim_status == 'Rejected') && !empty($claim->description)) {
+        $description = $claim->description;
+      }
     }
+
+    return $description;
+  } catch (Exception $ex) {
+
   }
 }
 
