@@ -264,7 +264,9 @@ function pum_claims_convert_currency() {
     } catch (CiviCRM_API3_Exception $ex) {
       //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
-    echo number_format($result['euro_amount'], 2, ',', '.');
+
+    echo number_format($result['euro_amount'], 2, '.', '');
+
     exit();
 }
 
@@ -439,7 +441,7 @@ function pum_claims_view($claim_id) {
       foreach($lines as $line) {
           $amount_submitted = $line['euro_amount'];
           $euro_amount = $line['euro_amount'];
-          $euro_amount = 'EUR ' . number_format($euro_amount, 2, '.', ',');
+          $euro_amount = 'EUR ' . number_format($euro_amount, 2, '.', '');
           $lineLog = '';
           $lineLogItems = array('values'=>'');
           try {
@@ -463,8 +465,8 @@ function pum_claims_view($claim_id) {
           $lineitemRow = array();
           $lineitemRow[] = $line['expense_date'];
           $lineitemRow[] = $line['expense_type'];
-          $lineitemRow[] = $line['currency'] . ' ' . number_format($line['currency_amount'], 2, '.', ',');
-          $lineitemRow[] = 'EUR '.number_format($amount_submitted, 2, '.', ',');
+          $lineitemRow[] = $line['currency'] . ' ' . number_format($line['currency_amount'], 2, '.', '');
+          $lineitemRow[] = 'EUR '.number_format($amount_submitted, 2, '.', '');
           $lineitemRow[] = $approved ? $euro_amount : null;
           $lineitemRow[] = $line['description'];
           $lineitemRows[] = $lineitemRow;
@@ -521,7 +523,7 @@ function pum_claims_view($claim_id) {
           );
           $form['lines']['table']['#attributes'] = array('width' => '100%');
           $form['lines']['table']['#rows'] = $lineitemRows;
-          $form['lines']['total']['#markup'] = '<strong>Total: </strong>EUR '.number_format($totalAmount, 2, ',', '.');
+          $form['lines']['total']['#markup'] = '<strong>Total: </strong>EUR '.number_format($totalAmount, 2, '.', '');
       }
 
       $form['attachments']['#type'] = 'fieldset';
@@ -662,7 +664,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         );
         $form['lines']['table']['#attributes'] = array('width' => '100%');
         $form['lines']['table']['#rows'] = $lineitemRows;
-        $form['lines']['total']['#markup'] = '<strong>Total: </strong>EUR '.number_format($totalAmount, 2, ',', '.');
+        $form['lines']['total']['#markup'] = '<strong>Total: </strong>EUR '.number_format($totalAmount, 2, '.', '');
     }
 
     $form['attachments']['#type'] = 'fieldset';
@@ -931,10 +933,9 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['amount']['#title'] = 'Amount (in currency)';
     $form['line']['amount']['#required'] = true;
     $form['line']['amount']['#default_value'] = $line['currency_amount'];
-    $form['line']['amount']['#element_validate'] = array('element_validate_number');
-    $form['line']['amount']['#description'] = 'Enter the amount of the note, in the respective currency';
+    $form['line']['amount']['#description'] = 'Enter the amount of the note with a dot (.) as decimal seperator, in the respective currency';
 
-    $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: <span id="euro-amount">'.$line['euro_amount'].'</span></p>';
+    $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: <span id="euro-amount">'.number_format($line['euro_amount'], 2, '.', '').'</span></p>';
 
     $form['line']['description']['#type'] = 'textfield';
     $form['line']['description']['#title'] = 'Description';
@@ -965,6 +966,10 @@ function pum_claims_line_form_validate($form, &$form_state) {
       $now = new DateTime();
       if ($expense_date > $now) {
         form_set_error('expense_date', 'You cannot enter an expense line in the future.');
+      }
+
+      if(!is_numeric($form_state['values']['amount'])) {
+        form_set_error('amount', 'Amount must be set with a dot (.) as decimal seperator');
       }
       /* on an empty expense_date an error is thrown
          here we ignore it. Then the required expense date rule fires

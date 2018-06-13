@@ -130,11 +130,11 @@ $handler->display->display_options['fields']['php_1']['use_php_setup'] = 0;
 $handler->display->display_options['fields']['php_1']['php_output'] = '<?php _pum_claims_delete_claim_link($row->id); ?>';
 $handler->display->display_options['fields']['php_1']['use_php_click_sortable'] = '0';
 $handler->display->display_options['fields']['php_1']['php_click_sortable'] = '';
-/* Sort criterion: CiviCRM Activities: Scheduled Activity Date */
-$handler->display->display_options['sorts']['activity_date_time']['id'] = 'activity_date_time';
-$handler->display->display_options['sorts']['activity_date_time']['table'] = 'civicrm_activity';
-$handler->display->display_options['sorts']['activity_date_time']['field'] = 'activity_date_time';
-$handler->display->display_options['sorts']['activity_date_time']['order'] = 'DESC';
+/* Sort criterion: CiviCRM Activities: Activity ID */
+$handler->display->display_options['sorts']['id']['id'] = 'id';
+$handler->display->display_options['sorts']['id']['table'] = 'civicrm_activity';
+$handler->display->display_options['sorts']['id']['field'] = 'id';
+$handler->display->display_options['sorts']['id']['order'] = 'DESC';
 /* Filter criterion: CiviCRM Activities: Activity Type */
 $handler->display->display_options['filters']['activity_type']['id'] = 'activity_type';
 $handler->display->display_options['filters']['activity_type']['table'] = 'civicrm_activity';

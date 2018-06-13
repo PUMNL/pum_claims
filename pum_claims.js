@@ -3,7 +3,7 @@
         var currency_id = $('#edit-currency').val();
         var amount = parseFloat($('#edit-amount').val());
         var expense_date = $('#edit-expense-date-datepicker-popup-0').val();
-        $('#euro_amount').html('0,00');
+        $('#euro_amount').html('0.00');
         if (currency_id > 0 && amount != NaN && expense_date.length > 0) {
 
             $.ajax({
