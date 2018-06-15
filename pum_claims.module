@@ -382,28 +382,33 @@ function pum_claims_removal_form($form, &$form_state, $claim_id) {
 }
 
 function pum_claims_removal_form_submit($form, &$form_state) {
-  if($form_state['values']['op'] == 'No') {
-    //No: return back to claims overview
-    drupal_goto('portal/claims');
-  }
+  if (pum_claims_is_claim_editable($form_state['input']['claim_id']) == TRUE) {
+    if($form_state['values']['op'] == 'No') {
+      //No: return back to claims overview
+      drupal_goto('portal/claims');
+    }
 
-  if($form_state['values']['op'] == 'Yes') {
-    //Yes: remove claim and return back to claims overview
-    //This will also remove the claim lines & claim log
-    try {
-      $remove_claim = civicrm_api3('Claim', 'Delete', array('id' => $form_state['input']['claim_id']));
+    if($form_state['values']['op'] == 'Yes') {
+      //Yes: remove claim and return back to claims overview
+      //This will also remove the claim lines & claim log
+      try {
+        $remove_claim = civicrm_api3('Claim', 'Delete', array('id' => $form_state['input']['claim_id']));
 
-      if ($remove_claim == TRUE) {
-        drupal_set_message('Your claim has been removed','status', FALSE);
-        drupal_goto('portal/claims');
-      } else {
-        //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $remove_claim, TRUE)), WATCHDOG_ERROR,'');
+        if ($remove_claim == TRUE) {
+          drupal_set_message('Your claim has been removed','status', FALSE);
+          drupal_goto('portal/claims');
+        } else {
+          //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $remove_claim, TRUE)), WATCHDOG_ERROR,'');
+          drupal_set_message('An error occurred while deleting your claim, please contact helpdesk.', 'error', FALSE);
+        }
+      } catch (CiviCRM_API3_Exception $ex) {
+        //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
         drupal_set_message('An error occurred while deleting your claim, please contact helpdesk.', 'error', FALSE);
       }
-    } catch (CiviCRM_API3_Exception $ex) {
-      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
-      drupal_set_message('An error occurred while deleting your claim, please contact helpdesk.', 'error', FALSE);
     }
+  } else {
+    drupal_set_message('You are not allowed to remove this claim because it has already been submitted','status', FALSE);
+    drupal_goto('portal/claims');
   }
 }
 
