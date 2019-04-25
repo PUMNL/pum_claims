@@ -1,6 +1,6 @@
 name = PUM claims
 description = Submitting claim expense entries (1.0).
 core = 7.x
-version = "7.x-1.2.1"
+version = "7.x-1.2.2"
 package = PUM
 dependencies[] = civicrm (>=4.4)

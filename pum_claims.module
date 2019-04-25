@@ -655,6 +655,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     if(!empty($claim['claim_description']) && $claim['claim_status'] == 'Waiting For Correction') {
       $form['lines']['remark']['#markup'] = '<div id="pum-claims-remark"><strong>Remark:</strong> <div id="pum-claims-remark-description">' . $claim['claim_description'] . '</div></div>';
     }
+    $form['lines']['explanation']['#markup'] = '<p class="description">Please click on \'Add expense line\' to add your expenses. For each line add a description what your expense is about.</p>';
     $form['lines']['new-line']['#type'] = 'markup';
     $form['lines']['new-line']['#markup'] = '<p><a href="/portal/claims/'.$claim_id.'/add-line" class="button" title="Through this button you enter the sequel screen, in which you can enter a line.">Add expense line</a></p>';
 
