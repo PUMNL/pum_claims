@@ -683,7 +683,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     }
     $form['attachments']['upload']['#prefix'] = '<div class="upload">';
     $form['attachments']['upload']['#suffix'] = '</div>';
-    $form['attachments']['upload']['explanation']['#markup'] = '<p class="description">Please upload at least one (or more) attachments</p>';
+    $form['attachments']['upload']['explanation']['#markup'] = '<p class="description">Please upload one or more attachments. You can upload multiple files by individually uploading the files.</p>';
     $form['attachments']['upload']['file']['#title'] = t('File');
     $form['attachments']['upload']['file']['#type'] = 'file';
     $form['attachments']['upload']['file']['#required'] = FALSE;
