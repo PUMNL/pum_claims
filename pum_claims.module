@@ -882,7 +882,11 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
 
     civicrm_initialize();
 
+    //#3916: Voorschotten should not be selectable for new claims
     $line_types = _pum_claims_getClaimLineTypes();
+    $key_voorschotten = array_search('Voorschotten', $line_types);
+    unset($line_types[$key_voorschotten]);
+
     $currencies = _pum_claims_get_civicrm_currencies();
 
     $line = array();
