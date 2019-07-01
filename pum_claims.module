@@ -556,6 +556,9 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         drupal_goto(url('portal/view-claim/'.$claim_id, array('absolute' => true)));
     }
 
+    drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
+    drupal_add_css(drupal_get_path('module', 'pum_claims') . '/pum_claims.css');
+
     try {
       civicrm_initialize();
       $contact_id = civicrm_api3('UFMatch', 'getvalue', array(
@@ -655,7 +658,10 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     if(!empty($claim['claim_description']) && $claim['claim_status'] == 'Waiting For Correction') {
       $form['lines']['remark']['#markup'] = '<div id="pum-claims-remark"><strong>Remark:</strong> <div id="pum-claims-remark-description">' . $claim['claim_description'] . '</div></div>';
     }
-    $form['lines']['explanation']['#markup'] = '<p class="description">Please click on \'Add expense line\' to add your expenses. For each line add a description what your expense is about.</p>';
+
+    $form['lines']['explanation']['#markup'] = '<div class="description_text"><p>Please click on \'Add expense line\' to add your expenses. For each line add a description what your expense is about. For every expense type use a separate line. <span class="helpbutton"></span></p><div id="description_help" style="display:none;"><p>Please use the button to add expense lines: For every expense type please add the correct line of expense type using the sequel screen.
+Per line add in the description information of what you claim is about; for instance: Cost center, 30km one way trip, Haarlem to Den Haag, visit Ethiek Commissie
+Please start every description with cost center if applicable. For information please consult the manual or contact our Finance & Control department</p></div>';
     $form['lines']['new-line']['#type'] = 'markup';
     $form['lines']['new-line']['#markup'] = '<p><a href="/portal/claims/'.$claim_id.'/add-line" class="button" title="Through this button you enter the sequel screen, in which you can enter a line.">Add expense line</a></p>';
 

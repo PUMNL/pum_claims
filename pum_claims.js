@@ -36,6 +36,14 @@
                     jQuery(this).children('.line-log').css('display', 'none');
                 }
             );
+
+            $('.helpbutton').hover(function() {
+              $('#description_help').show();
+            });
+
+            $('.helpbutton').mouseout(function() {
+              $('#description_help').hide();
+            });
         }
     };
 

@@ -18,7 +18,12 @@
 #pum-claims-line-form .form-item-expense-date-date .description {
     display: none;
 }
-
+#pum-claims-line-form .description > #description_help {
+  display: none;
+}
+#pum-claims-line-form .description:hover > #description_help {
+  display: block;
+}
 #pum-claims-remark {
   background-color:#F57B20;
   color:#483493;
@@ -29,4 +34,28 @@
 }
 #pum-claims-remark #pum-claims-remark-description {
   color: #FFFFFF;
+}
+span.helpbutton {
+  background-color:inherit;
+  font-family: inherit;
+  padding: inherit;
+  position:relative;
+  background: url('help.png') no-repeat 0 0;
+  padding:10px 0px 0px 26px;
+  cursor: help;
+}
+code.help div {
+  display:none;
+  position: absolute;
+  top: 0;
+  left: 26px;
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid red;
+  padding: 5px;
+}
+code.help span.close {
+  position: absolute;
+  right: 0;
+  top: 0;
 }
