@@ -629,6 +629,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
     $form['about_me']['iban']['#markup'] = '<p><strong>IBAN: </strong> ' . $bankDetails['iban'] . '</p>';
+    $form['about_me']['claims_manual']['#markup'] = '<p><strong>Claims manual: </strong> <u><a href="/portal/manual/claims-indienen" target="_blank">Claims indienen</a></u></p>';
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim Role';
     $form['about_me']['type']['#required'] = true;
@@ -915,6 +916,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line_id']['#value'] = $line_id;
 
     $form['line']['#type'] = 'fieldset';
+    $form['line']['claims_remunerationpolicy']['#markup'] = '<button id="remuneration_policy"><a href="/system/files/vergoedingenbeleid.pdf" target="_blank">Remuneration Policy</a></button>';
     $form['line']['expense_date']['#type'] = 'date_popup';
     $form['line']['expense_date']['#title'] = 'Date expense incurred';
     $form['line']['expense_date']['#date_label_position'] = 'before';

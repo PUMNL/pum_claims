@@ -24,6 +24,9 @@
 #pum-claims-line-form .description:hover > #description_help {
   display: block;
 }
+#pum-claims-line-form #remuneration_policy a{
+  color: #FFFFFF;
+}
 #pum-claims-remark {
   background-color:#F57B20;
   color:#483493;
