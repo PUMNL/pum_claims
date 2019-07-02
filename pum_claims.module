@@ -882,12 +882,17 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     if (!pum_claims_is_claim_editable($claim_id)) {
         drupal_goto(url('portal/view-claim/'.$claim_id, array('absolute' => true)));
     }
-
-    drupal_add_js(array('pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'))), 'setting');
+    civicrm_initialize();
+    drupal_add_js(
+      array(
+        'pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'),
+                              'km_allowance' => civicrm_api('OptionValue', 'getvalue', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type', 'label' => 'KM-allowance', 'return' => 'value'))
+                        )
+      ), 'setting'
+    );
     drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
     drupal_add_css(drupal_get_path('module', 'pum_claims') . '/pum_claims.css');
 
-    civicrm_initialize();
 
     //#3916: Voorschotten should not be selectable for new claims
     $line_types = _pum_claims_getClaimLineTypes();
@@ -903,6 +908,8 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $line['euro_amount'] = '0.00';
     $line['description'] = '';
     $line['expense_type'] = null;
+    $line['distance_km'] = null;
+
     if ($line_id) {
         $line = civicrm_api3('ClaimLine', 'getsingle', array('id' => $line_id));
         $expenseDate = new DateTime($line['expense_date']);
@@ -950,6 +957,12 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
 
     $form['line']['eur_amount']['#markup'] = '<p>Amount in EUR: <span id="euro-amount">'.number_format($line['euro_amount'], 2, '.', '').'</span></p>';
 
+    $form['line']['distance_km']['#type'] = 'textfield';
+    $form['line']['distance_km']['#title'] = 'Distance (in kilometers) <span class="form-required" title="This field is required.">*</span>';
+    $form['line']['distance_km']['#required'] = false;
+    $form['line']['distance_km']['#default_value'] = $line['distance_km'];
+    $form['line']['distance_km']['#description'] = 'Enter the amount of the note with a dot (.) as decimal seperator, in the respective currency';
+
     $form['line']['description']['#type'] = 'textfield';
     $form['line']['description']['#title'] = 'Description';
     $form['line']['description']['#required'] = true;
@@ -969,10 +982,18 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
 function pum_claims_line_form_validate($form, &$form_state) {
     try {
       $types = _pum_claims_getClaimLineTypes();
-      $key_voorschotten = array_search('Voorschotten', $types);
+      (int)$key_voorschotten = array_search('Voorschotten', $types);
+      (int)$key_kmallowance = array_search('KM-allowance', $types);
 
-      if($form_state['values']['type'] == $key_voorschotten && (!is_int((int)$form_state['values']['amount']) | $form_state['values']['amount'] > 0)) {
+      if((int)$form_state['values']['type'] == (int)$key_voorschotten && (!is_int((int)$form_state['values']['amount']) | $form_state['values']['amount'] > 0)) {
         form_set_error('amount', 'Amount for claim line type "Voorschotten" should be a negative value put a dash (-) before the number');
+      }
+
+      if($form_state['values']['type'] != (int)$key_kmallowance) {
+        $form_state['values']['distance_km'] = NULL;
+      }
+      if((int)$form_state['values']['type'] == (int)$key_kmallowance && (empty($form_state['values']['distance_km']) | $form_state['values']['distance_km'] < 0)) {
+        form_set_error('distance_km', 'Distance should be a positive value');
       }
 
       $expense_date = new DateTime($form_state['values']['expense_date']);
@@ -1018,6 +1039,20 @@ function pum_claims_line_form_submit($form, &$form_state) {
     $params['currency_id'] = $form_state['values']['currency'];
     $params['currency_amount'] = $form_state['values']['amount'];
     $params['euro_amount'] = $result['euro_amount'];
+
+    $claimline_types = _pum_claims_getClaimLineTypes();
+    (int)$key_kmallowance = array_search('KM-allowance', $claimline_types);
+
+    if($form_state['values']['type'] == (int)$key_kmallowance && !empty($form_state['values']['distance_km'])){
+      $params['distance_km'] = $form_state['values']['distance_km'];
+    } else {
+      //clean distance
+      $sql = 'UPDATE pum_claim_line SET distance_km = null WHERE id = %1';
+      $dao = CRM_Core_DAO::executeQuery($sql, array(
+        1 => array((int)$line_id, 'Integer')
+      ));
+    }
+
     $params['description'] = $form_state['values']['description'];
     $params['expense_type'] = $form_state['values']['type'];
     $params['exchange_rate'] = $result['exchange_rate'];
@@ -1050,8 +1085,7 @@ function pum_claims_remove_line($claim_id, $line_id) {
  * @param array $roles
  * @return bool
  */
-function pum_claims_user_has_role($roles = array())
-{
+function pum_claims_user_has_role($roles = array()) {
     global $user;
     if (in_array('administrator', $user->roles)) {
         return TRUE;

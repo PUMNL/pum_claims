@@ -44,6 +44,25 @@
             $('.helpbutton').mouseout(function() {
               $('#description_help').hide();
             });
+
+            //#3946: Hide distance field when KM-allowance is not selected
+            $('.form-item-distance-km').hide();
+
+            $('#pum-claims-line-form #edit-type')
+              .change(function() {
+                if($('#pum-claims-line-form #edit-type').val() == Drupal.settings.pum_claims.km_allowance) {
+                  $('.form-item-distance-km').show();
+                } else {
+                  $('.form-item-distance-km').hide();
+                }
+              })
+              .ready(function() {
+                if($('#pum-claims-line-form #edit-type').val() == Drupal.settings.pum_claims.km_allowance) {
+                  $('.form-item-distance-km').show();
+                } else {
+                  $('.form-item-distance-km').hide();
+                }
+              });
         }
     };
 
