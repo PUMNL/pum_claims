@@ -909,6 +909,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $line['description'] = '';
     $line['expense_type'] = null;
     $line['distance_km'] = null;
+    $line['cost_center'] = null;
 
     if ($line_id) {
         $line = civicrm_api3('ClaimLine', 'getsingle', array('id' => $line_id));
@@ -962,6 +963,13 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['distance_km']['#required'] = false;
     $form['line']['distance_km']['#default_value'] = $line['distance_km'];
     $form['line']['distance_km']['#description'] = 'Enter the amount of the note with a dot (.) as decimal seperator, in the respective currency';
+
+    $form['line']['cost_center']['#type'] = 'textfield';
+    $form['line']['cost_center']['#title'] = 'Cost Center (Optional field, only fill when provided to you by financial department)';
+    $form['line']['cost_center']['#required'] = false;
+    $form['line']['cost_center']['#default_value'] = $line['cost_center'];
+    $form['line']['cost_center']['#maxlength'] = 8;
+    $form['line']['cost_center']['#description'] = 'Optional field, fill in cost center when provided to you by financial department. Length is always 8 characters.';
 
     $form['line']['description']['#type'] = 'textfield';
     $form['line']['description']['#title'] = 'Description';
@@ -1048,6 +1056,16 @@ function pum_claims_line_form_submit($form, &$form_state) {
     } else {
       //clean distance
       $sql = 'UPDATE pum_claim_line SET distance_km = null WHERE id = %1';
+      $dao = CRM_Core_DAO::executeQuery($sql, array(
+        1 => array((int)$line_id, 'Integer')
+      ));
+    }
+
+    if(!empty($form_state['values']['cost_center'])){
+      $params['cost_center'] = $form_state['values']['cost_center'];
+    } else {
+      //clean distance
+      $sql = 'UPDATE pum_claim_line SET cost_center = null WHERE id = %1';
       $dao = CRM_Core_DAO::executeQuery($sql, array(
         1 => array((int)$line_id, 'Integer')
       ));
