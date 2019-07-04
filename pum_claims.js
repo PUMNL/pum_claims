@@ -45,24 +45,29 @@
               $('#description_help').hide();
             });
 
-            //#3946: Hide distance field when KM-allowance is not selected
             $('.form-item-distance-km').hide();
 
             $('#pum-claims-line-form #edit-type')
               .change(function() {
+                //#3946: Show distance field when KM-allowance is selected
                 if($('#pum-claims-line-form #edit-type').val() == Drupal.settings.pum_claims.km_allowance) {
                   $('.form-item-distance-km').show();
                 } else {
                   $('.form-item-distance-km').hide();
                 }
-              })
-              .ready(function() {
-                if($('#pum-claims-line-form #edit-type').val() == Drupal.settings.pum_claims.km_allowance) {
-                  $('.form-item-distance-km').show();
-                } else {
-                  $('.form-item-distance-km').hide();
-                }
-              });
+
+                //#3820: Show description when claim line type is selected
+                $.each(Drupal.settings.pum_claims.claim_type_description.values, function(key, claim_type) {
+                  if (claim_type.value == $('#edit-type').val()){
+                    $('#expense_type_description').text(claim_type.description);
+                    if(claim_type.description != undefined && claim_type.description.length > 0) {
+                      $('#expense_type_description').show();
+                    } else {
+                      $('#expense_type_description').hide();
+                    }
+                  }
+                });
+              }).change();
         }
     };
 

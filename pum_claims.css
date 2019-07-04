@@ -27,6 +27,9 @@
 #pum-claims-line-form #remuneration_policy a{
   color: #FFFFFF;
 }
+#pum-claims-line-form #expense_type_description {
+  padding: 5px;
+}
 #pum-claims-remark {
   background-color:#F57B20;
   color:#483493;

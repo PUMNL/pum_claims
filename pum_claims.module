@@ -883,21 +883,25 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
         drupal_goto(url('portal/view-claim/'.$claim_id, array('absolute' => true)));
     }
     civicrm_initialize();
+
     drupal_add_js(
       array(
         'pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'),
-                              'km_allowance' => civicrm_api('OptionValue', 'getvalue', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type', 'label' => 'KM-allowance', 'return' => 'value'))
+                              'km_allowance' => civicrm_api('OptionValue', 'getvalue', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type', 'label' => 'KM-allowance', 'return' => 'value')),
+                              'claim_type_description' => civicrm_api('OptionValue', 'get', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type'))
                         )
       ), 'setting'
     );
     drupal_add_js(drupal_get_path('module', 'pum_claims') . '/pum_claims.js');
     drupal_add_css(drupal_get_path('module', 'pum_claims') . '/pum_claims.css');
 
-
-    //#3916: Voorschotten should not be selectable for new claims
     $line_types = _pum_claims_getClaimLineTypes();
+    //#3916: Voorschotten should not be selectable for new claims
     $key_voorschotten = array_search('Voorschotten', $line_types);
     unset($line_types[$key_voorschotten]);
+    //#3820: Communication Costs should not be selectable for new claims
+    $key_communicationcosts = array_search('Communication Costs', $line_types);
+    unset($line_types[$key_communicationcosts]);
 
     $currencies = _pum_claims_get_civicrm_currencies();
 
@@ -942,6 +946,8 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['type']['#options'] = $line_types;
     $form['line']['type']['#default_value'] = $line['expense_type'];
     $form['line']['type']['#description'] = 'The claim line type is used to categorize the costs for administrative purposes. Please make a selection from the options in the pull-down menu.';
+
+    $form['line']['type_description']['#markup'] = '<div id="expense_type_description"></div>';
 
     $form['line']['currency']['#type'] = 'select';
     $form['line']['currency']['#title'] = 'Currency';
@@ -1206,6 +1212,7 @@ function _pum_claims_getClaimLineTypes() {
     foreach($result['values'] as $value) {
         $types[$value['value']] = $value['label'];
     }
+    asort($types);
     return $types;
 }
 
