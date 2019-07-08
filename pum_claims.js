@@ -46,6 +46,7 @@
             });
 
             $('.form-item-distance-km').hide();
+            $('#expense_type_description').hide();
 
             $('#pum-claims-line-form #edit-type')
               .change(function() {
@@ -57,15 +58,16 @@
                 }
 
                 //#3820: Show description when claim line type is selected
+                $('#expense_type_description').text('');
+                $('#expense_type_description').hide();
+                $('#pum-claims-line-form #expense_type_description').css('background-color','#FFFFFF');
+
                 $.each(Drupal.settings.pum_claims.claim_type_description.values, function(key, claim_type) {
-                  if (claim_type.value == $('#edit-type').val()){
-                    $('#expense_type_description').text(claim_type.description);
-                    if(claim_type.description != undefined && claim_type.description.length > 0) {
+                    if(claim_type.value == $('#pum-claims-line-form #edit-type').val()){
+                      $('#expense_type_description').text(claim_type.description);
                       $('#expense_type_description').show();
-                    } else {
-                      $('#expense_type_description').hide();
+                      $('#pum-claims-line-form #expense_type_description').css('background-color','#E5DEFF');
                     }
-                  }
                 });
               }).change();
         }
