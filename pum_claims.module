@@ -294,8 +294,10 @@ function pum_claims_form($form, &$form_state) {
 
     $claim_types = _pum_claims_getClaimTypes();
     $link_options = _pum_claims_getClaimLinksForContact($contact_id, FALSE); //FALSE: Completed links should not be visible in submit new claim screen
+
     if(empty( $link_options)) {
      unset($claim_types['project']);
+     unset($claim_types['representative']);
     }
 
     $form['about_me']['#type'] = 'fieldset';
@@ -304,7 +306,7 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['bank_help']['#markup'] = '<p><em>These are your personal bank details as registered in our system. Are the displayed data incorrect? Please use the form Personal Data under My Profile to correct the information.</em></p>';
     $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
-    $form['about_me']['iban']['#markup'] = '<p><strong>IBAN: </strong> ' . $bankDetails['iban'] . '</p>';
+    $form['about_me']['iban']['#markup'] = '<p><strong>Bank Account Number: </strong> ' . (!empty($bankDetails['iban']) ? $bankDetails['iban'] : (!empty($bankDetails['bank_account_number']) ? $bankDetails['bank_account_number']:'')).'</p>';
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim Role';
     $form['about_me']['type']['#required'] = true;
@@ -317,10 +319,18 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['link']['#description'] = 'The activities are related to a Main Activity/Case, please select the specific Main Activity/Case (pull down menu) from the list.';
     $form['about_me']['link']['#states'] = array(
       'visible' => array(
-        'select#edit-type' => array('value' => 'project'),
+        array(
+          array('select#edit-type' => array('value' => 'project')),
+          'or',
+          array('select#edit-type' => array('value' => 'representative')),
+        ),
       ),
       'required' => array(
-        'select#edit-type' => array('value' => 'project'),
+        array(
+          array('select#edit-type' => array('value' => 'project')),
+          'or',
+          array('select#edit-type' => array('value' => 'representative')),
+        ),
       ),
     );
 
@@ -348,7 +358,7 @@ function pum_claims_form_submit($form, &$form_state) {
     $params['expense_date'] = $expenseDate->format("Ymd");
     $params['claim_type'] = $form_state['values']['type'];
     $params['claim_contact_id'] = $contact_id;
-    if($params['claim_type']=='project') {
+    if($params['claim_type']=='project' | $params['claim_type']=='representative') {
       $params['claim_link'] = $form_state['values']['link'];
     }
     $params['claim_total_amount'] = 0;
@@ -498,6 +508,7 @@ function pum_claims_view($claim_id) {
 
       if(empty($link_options)){
          unset($claim_types['project']);
+         unset($claim_types['representative']);
       }
 
       $form = array();
@@ -506,7 +517,7 @@ function pum_claims_view($claim_id) {
       $form['about_me']['birthdate']['#markup'] = '<p><strong>Birth date:</strong> '.$strBirthDate.'</p>';
       $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '.$bankDetails['bank'].'</p>';
       $form['about_me']['bic']['#markup'] = '<p><strong>BIC:</strong> '.$bankDetails['bic'].'</p>';
-      $form['about_me']['iban']['#markup'] = '<p><strong>IBAN:</strong> '.$bankDetails['iban'].'</p>';
+      $form['about_me']['iban']['#markup'] = '<p><strong>Bank Account Number:</strong> '.(!empty($bankDetails['iban']) ? $bankDetails['iban'] : (!empty($bankDetails['bank_account_number']) ? $bankDetails['bank_account_number']:'')).'</p>';
       $form['about_me']['type']['#markup'] = '<p><strong>Claim Role:</strong> '.$claim_types[$claim['claim_type_id']].'</p>';
       if(isset($claim['claim_linked_to'])) {
         $form['about_me']['link']['#markup'] = '<p><strong>Link:</strong> ' . $link_options[$claim['claim_linked_to']] . '</p>';
@@ -617,6 +628,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $link_options = _pum_claims_getClaimLinksForContact($contact_id, FALSE); //FALSE: Completed links should not be visible in edit new claim screen
     if(empty($link_options)){
        unset($claim_types['project']);
+       unset($claim_types['representative']);
     }
 
     $form['claim_id']['#type'] = 'hidden';
@@ -639,17 +651,25 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
 
     $form['about_me']['link']['#type'] = 'select';
     $form['about_me']['link']['#title'] = 'Main Activity/Case';
-    if($claim['claim_type_id']=='project') {
+    if($claim['claim_type_id']=='project' | $claim['claim_type_id']=='representative') {
       $form['about_me']['link']['#default_value'] = $claim['claim_linked_to'];
     }
     $form['about_me']['link']['#options'] = $link_options;
     $form['about_me']['link']['#description'] = 'The activities are related to a Main Actity/Case, please select the specific Main/Activity (pull down menu) from the list.';
     $form['about_me']['link']['#states'] = array(
       'visible' => array(
-        'select#edit-type' => array('value' => 'project'),
+        array(
+          array('select#edit-type' => array('value' => 'project')),
+          'or',
+          array('select#edit-type' => array('value' => 'representative')),
+        ),
       ),
       'required' => array(
-        'select#edit-type' => array('value' => 'project'),
+        array(
+          array('select#edit-type' => array('value' => 'project')),
+          'or',
+          array('select#edit-type' => array('value' => 'representative')),
+        ),
       ),
     );
 
@@ -753,8 +773,8 @@ function pum_claims_edit_form_submit_save($form, &$form_state) {
     $params['expense_date'] = $expenseDate->format("Ymd");
     $params['claim_type'] = $form_state['values']['type'];
     $params['claim_contact_id'] = $contact_id;
-    /* only a project needs a claim link */
-    if($params['claim_type']=='project') {
+    /* only a project and represenative needs a claim link */
+    if($params['claim_type']=='project' | $params['claim_type']=='representative') {
       $params['claim_link'] = $form_state['values']['link'];
     }
     $params['claim_total_amount'] = 0;
@@ -1280,32 +1300,42 @@ function _pum_claims_updateBankDetailsOfContact($contact_id, $bank, $iban, $bic)
 }
 
 function _pum_claims_getBankDetailsOfContact($contact_id) {
+    $bank = array();
+
     try {
       $bankInformationCustomGroup = civicrm_api3('CustomGroup', 'getsingle', array('name' => 'Bank_Information'));
       $bankInformationCustomGroupId = $bankInformationCustomGroup['id'];
-      $bankNameCustomFieldId = civicrm_api3('CustomField', 'getvalue', array('name' => 'Bank_Name', 'custom_group_id' => $bankInformationCustomGroupId, 'return' => 'id'));
-      $IBANCustomFieldId = civicrm_api3('CustomField', 'getvalue', array('name' => 'IBAN_nummer', 'custom_group_id' => $bankInformationCustomGroupId, 'return' => 'id'));
-      $BICCustomFieldId = civicrm_api3('CustomField', 'getvalue', array('name' => 'BIC_Swiftcode', 'custom_group_id' => $bankInformationCustomGroupId, 'return' => 'id'));
+      $bankNameCustomFieldId =          civicrm_api3('CustomField', 'getvalue', array('name' => 'Bank_Name', 'custom_group_id' => $bankInformationCustomGroupId, 'return' => 'column_name'));
+      $bankAccountNumberCustomFieldId = civicrm_api3('CustomField', 'getvalue', array('name' => 'Bank_Account_Number', 'custom_group_id' => $bankInformationCustomGroupId, 'return' => 'column_name'));
+      $IBANCustomFieldId =              civicrm_api3('CustomField', 'getvalue', array('name' => 'IBAN_nummer', 'custom_group_id' => $bankInformationCustomGroupId, 'return' => 'column_name'));
+      $BICCustomFieldId =               civicrm_api3('CustomField', 'getvalue', array('name' => 'BIC_Swiftcode', 'custom_group_id' => $bankInformationCustomGroupId, 'return' => 'column_name'));
 
-      $contact = civicrm_api3('Contact', 'getsingle', array(
-          'id' => $contact_id,
-          'return' => array('custom_'.$bankNameCustomFieldId, 'custom_'.$IBANCustomFieldId, 'custom_'.$BICCustomFieldId),
-      ));
+      $bank_info = CRM_Core_DAO::executeQuery("SELECT * FROM ".$bankInformationCustomGroup['table_name']." WHERE entity_id = %1 LIMIT 1", array(1=>array($contact_id,'Integer')));
+
+      while($bank_info->fetch()){
+        if(!empty($bank_info)) {
+          $bank = $bank_info;
+        }
+      }
     } catch (CiviCRM_API3_Exception $ex) {
       //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
     }
 
     $return['bank'] = '';
+    $return['bank_account_number'] = '';
     $return['iban'] = '';
     $return['bic'] = '';
-    if (isset($contact['custom_'.$bankNameCustomFieldId])) {
-        $return['bank'] = $contact['custom_'.$bankNameCustomFieldId];
+    if (isset($bank->$bankNameCustomFieldId)) {
+        $return['bank'] = $bank->$bankNameCustomFieldId;
     }
-    if (isset($contact['custom_'.$IBANCustomFieldId])) {
-        $return['iban'] = $contact['custom_'.$IBANCustomFieldId];
+    if (isset($bank->$bankAccountNumberCustomFieldId)) {
+        $return['bank_account_number'] = $bank->$bankAccountNumberCustomFieldId;
     }
-    if (isset($contact['custom_'.$BICCustomFieldId])) {
-        $return['bic'] = $contact['custom_'.$BICCustomFieldId];
+    if (isset($bank->$IBANCustomFieldId)) {
+        $return['iban'] = $bank->$IBANCustomFieldId;
+    }
+    if (isset($bank->$BICCustomFieldId)) {
+        $return['bic'] = $bank->$BICCustomFieldId;
     }
 
     return $return;
