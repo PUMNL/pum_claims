@@ -33,8 +33,12 @@ $handler->display->display_options['header']['area']['id'] = 'area';
 $handler->display->display_options['header']['area']['table'] = 'views';
 $handler->display->display_options['header']['area']['field'] = 'area';
 $handler->display->display_options['header']['area']['empty'] = TRUE;
-$handler->display->display_options['header']['area']['content'] = '<p><a href="/portal/new-claim" class="button">Submit a new claim</a></p>';
-$handler->display->display_options['header']['area']['format'] = 'filtered_html';
+$handler->display->display_options['header']['area']['content'] = '<?php
+global $language;
+$lang_name = $language->language;
+echo \'<p><a href="/portal/new-claim">Submit a new claim</a>  <a href="\'.variable_get(\'pum_claims_linkmanual_\'.$lang_name, variable_get(\'pum_claims_linkmanual_en\')).\'">Manual claims</a>  <a href="\'.variable_get(\'pum_claims_linkrenumerationpolicy_\'.$lang_name, variable_get(\'pum_claims_linkrenumerationpolicy_en\')).\'">Renumeration Policy</a>\';
+?>';
+$handler->display->display_options['header']['area']['format'] = 'php_code';
 /* Relationship: CiviCRM Activity Contacts: Activity Contact ID */
 $handler->display->display_options['relationships']['contact_id']['id'] = 'contact_id';
 $handler->display->display_options['relationships']['contact_id']['table'] = 'civicrm_activity_contact';
