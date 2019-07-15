@@ -70,6 +70,22 @@
                     }
                 });
               }).change();
+
+            $('#remuneration_policy').click(function(){
+              var win = '';
+              if(Drupal.settings.pum_claims.site_language == 'en' | Drupal.settings.pum_claims.site_language == 'fr' | Drupal.settings.pum_claims.site_language == 'es' | Drupal.settings.pum_claims.site_language == 'ar' | Drupal.settings.pum_claims.site_language == 'ru'){
+                win = window.open(Drupal.settings.pum_claims.pum_claims_linkrenumerationpolicy_en, '_blank');
+              } else if(Drupal.settings.pum_claims.site_language == 'nl'){
+                win = window.open(Drupal.settings.pum_claims.pum_claims_linkrenumerationpolicy_nl, '_blank');
+              }
+              if (win) {
+                  //Browser has allowed it to be opened
+                  win.focus();
+              } else {
+                  //Browser has blocked it
+                  //alert('Please allow popups for this website');
+              }
+            });
         }
     };
 

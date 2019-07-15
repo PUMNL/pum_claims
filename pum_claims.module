@@ -69,6 +69,22 @@ function pum_claims_menu() {
         'access callback' => 'pum_claims_user_has_role_and_is_on_activity_and_claim_not_submitted',
         'access arguments' => array(pum_claims_get_roles_who_can_access(), 2),
     );
+
+    $items['admin/config/pum'] = array(
+      'title' => 'PUM',
+      'description' => 'Configuration for PUM',
+      'access arguments' => array('administer site configuration'),
+    );
+    $items['admin/config/pum/claims'] = array(
+      'title' => 'Claims configuration',
+      'description' => 'Configuration for claims',
+      'type' => MENU_NORMAL_ITEM,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('pum_claims_admin_settings'),
+      'access arguments' => array('administer site configuration'),
+      'file' => 'pum_claims.admin.inc',
+      'file path' => drupal_get_path('module', 'pum_claims'),
+    );
     return $items;
 }
 
@@ -87,6 +103,13 @@ function pum_claims_views_default_views() {
         }
     }
     return $views;
+}
+
+function pum_claims_views_pre_view(&$view, &$display_id, &$args){
+
+  if (!empty($view->name) && $view->name == 'claims') {
+    drupal_add_css(drupal_get_path('module', 'pum_claims') . '/pum_claims.css');
+  }
 }
 
 function _pum_claims_view_show_status($claim_id) {
@@ -641,7 +664,11 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
     $form['about_me']['iban']['#markup'] = '<p><strong>IBAN: </strong> ' . $bankDetails['iban'] . '</p>';
-    $form['about_me']['claims_manual']['#markup'] = '<p><strong>Claims manual: </strong> <u><a href="/portal/manual/claims-indienen" target="_blank">Claims indienen</a></u></p>';
+
+    global $language;
+    $lang_name = $language->language;
+
+    $form['about_me']['claims_manual']['#markup'] = '<p><strong>Claims manual: </strong> <u><a href="'.variable_get('pum_claims_linkmanual_'.$lang_name, variable_get('pum_claims_linkmanual_en')).'" target="_blank">'.variable_get('pum_claims_linkmanual_text_'.$lang_name, variable_get('pum_claims_linkmanual_text_en')).'</a></u> - <u><a href="'.variable_get('pum_claims_linkrenumerationpolicy_'.$lang_name, variable_get('pum_claims_linkrenumerationpolicy_en')).'" target="_blank">'.variable_get('pum_claims_linkrenumerationpolicy_text_'.$lang_name, variable_get('pum_claims_linkrenumerationpolicy_text_en')).'</a></u></p>';
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim Role';
     $form['about_me']['type']['#required'] = true;
@@ -903,12 +930,21 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
         drupal_goto(url('portal/view-claim/'.$claim_id, array('absolute' => true)));
     }
     civicrm_initialize();
-
+    global $language;
     drupal_add_js(
       array(
         'pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'),
                               'km_allowance' => civicrm_api('OptionValue', 'getvalue', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type', 'label' => 'KM-allowance', 'return' => 'value')),
-                              'claim_type_description' => civicrm_api('OptionValue', 'get', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type'))
+                              'claim_type_description' => civicrm_api('OptionValue', 'get', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type')),
+                              'pum_claims_linkmanual_text_en' => variable_get('pum_claims_linkmanual_text_en'),
+                              'pum_claims_linkmanual_en' => variable_get('pum_claims_linkmanual_en'),
+                              'pum_claims_linkmanual_text_nl' => variable_get('pum_claims_linkmanual_text_nl'),
+                              'pum_claims_linkmanual_nl' => variable_get('pum_claims_linkmanual_nl'),
+                              'pum_claims_linkrenumerationpolicy_text_en' => variable_get('pum_claims_linkrenumerationpolicy_text_en'),
+                              'pum_claims_linkrenumerationpolicy_en' => variable_get('pum_claims_linkrenumerationpolicy_en'),
+                              'pum_claims_linkrenumerationpolicy_text_nl' => variable_get('pum_claims_linkrenumerationpolicy_text_nl'),
+                              'pum_claims_linkrenumerationpolicy_nl' => variable_get('pum_claims_linkrenumerationpolicy_nl'),
+                              'site_language' => $language->language
                         )
       ), 'setting'
     );
@@ -947,8 +983,11 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line_id']['#type'] = 'hidden';
     $form['line_id']['#value'] = $line_id;
 
+    global $language;
+    $lang_name = $language->language;
+
     $form['line']['#type'] = 'fieldset';
-    $form['line']['claims_remunerationpolicy']['#markup'] = '<button id="remuneration_policy"><a href="/system/files/vergoedingenbeleid.pdf" target="_blank">Remuneration Policy</a></button>';
+    $form['line']['claims_remunerationpolicy']['#markup'] = '<a href="#" id="remuneration_policy">'.variable_get('pum_claims_linkrenumerationpolicy_text_'.$lang_name, variable_get('pum_claims_linkrenumerationpolicy_text_en')).'</a>';
     $form['line']['expense_date']['#type'] = 'date_popup';
     $form['line']['expense_date']['#title'] = 'Date expense incurred';
     $form['line']['expense_date']['#date_label_position'] = 'before';

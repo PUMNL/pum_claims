@@ -1,3 +1,7 @@
+.views-page .view-id-claims .view-header a {
+  background-color: #483493 !important;
+
+}
 .page-portal-view-claim .line-amount-eur {
     cursor: pointer;
 }
@@ -23,6 +27,32 @@
 }
 #pum-claims-line-form .description:hover > #description_help {
   display: block;
+}
+#pum-claims-line-form #remuneration_policy {
+  border-style: solid;
+  border-width: 0px;
+  cursor: pointer;
+  font-family: "merriweatherregular","Times New Roman",Times,serif;
+  font-weight: normal;
+  line-height: normal;
+  margin: 0 0 1.4285714286rem;
+  position: relative;
+  text-decoration: none;
+  text-align: center;
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
+  display: inline-block;
+  padding-top: 0.7142857143rem;
+  padding-right: 1.4285714286rem;
+  padding-bottom: 0.7857142857rem;
+  padding-left: 1.4285714286rem;
+  font-size: 0.7857142857rem;
+  background-color: #483493;
+  border-color: #483493;
+  color: #ffffff;
+}
+#pum-claims-line-form #remuneration_policy:hover {
+  background-color: #cb5e00;
 }
 #pum-claims-line-form #remuneration_policy a{
   color: #FFFFFF;
