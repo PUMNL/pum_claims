@@ -232,21 +232,38 @@ function pum_claims_is_claim_approved($claim_id){
 }
 
 function pum_claims_get_amount_submitted($claim_id) {
+
   $lines = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line WHERE activity_id = %1", array(1=>array($claim_id, 'Integer')));
   $totalAmount = 0.00;
-  if($lines->N == 0) {
-    $totalAmount = CRM_Core_DAO::singleValueQuery(
-      "SELECT total_expenses_389 FROM civicrm_value_claiminformation_70 ci LEFT JOIN pum_claim_log cl ON cl.claim_activity_id = ci.entity_id WHERE ci.entity_id = %1",
-      array(1=>array($claim_id, 'Integer'))
-    );
+
+  if(pum_claims_is_claim_editable($claim_id)) {
+    //If claim is editable, just calculate all claim lines and put it in total
+    while($lines->fetch()){
+      $totalAmount = $totalAmount + ((float) $lines->euro_amount);
+    }
   } else {
-    while ($lines->fetch()) {
-      $original_line_amount = $lines->euro_amount;
-      $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 ORDER BY changed_date DESC LIMIT 1", array(1=>array($lines->id, 'Integer')));
-      if ($line_log_items->fetch() && isset($line_log_items->old_euro_amount)) {
-        $original_line_amount = $line_log_items->old_euro_amount;
+    $lines = _pum_claims_getClaimLines($claim_id);
+
+    if(!empty($lines) && is_array($lines)) {
+      $totalAmount = 0.00;
+      foreach($lines as $line) {
+        $original_line_amount = $line['euro_amount'];
+        $current_user = CRM_Core_Session::singleton()->getLoggedInContactID();
+        $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 AND changed_by_id = %2 ORDER BY changed_date DESC LIMIT 1", array(1=>array($line['id'], 'Integer'),2=>array((int)$current_user,'Integer')));
+
+        if ($line_log_items->fetch() && !empty($line_log_items->new_euro_amount)) {
+          $original_line_amount = $line_log_items->new_euro_amount;
+        } else if ($line_log_items->fetch() && !empty($line_log_items->old_euro_amount)) {
+          $original_line_amount = $line_log_items->old_euro_amount;
+        }
+
+        $totalAmount = $totalAmount + $original_line_amount;
       }
-      $totalAmount = $totalAmount + $original_line_amount;
+    } else {
+      $totalAmount = CRM_Core_DAO::singleValueQuery(
+        "SELECT total_expenses_389 FROM civicrm_value_claiminformation_70 ci WHERE ci.entity_id = %1",
+        array(1=>array($claim_id, 'Integer'))
+      );
     }
   }
 
@@ -478,6 +495,8 @@ function pum_claims_view($claim_id) {
       $approved = pum_claims_is_claim_approved($claim_id);
       $lineitemRows = array();
       $totalAmount = 0.00;
+      $totalAmountSubmitted = pum_claims_get_amount_submitted($claim_id);
+
       foreach($lines as $line) {
           $amount_submitted = $line['euro_amount'];
           $euro_amount = $line['euro_amount'];
@@ -497,21 +516,24 @@ function pum_claims_view($claim_id) {
             $euro_amount = '<span class="line-amount-eur">'.$euro_amount.'&nbsp;<span class="helpicon">&nbsp;</span> <div style="display: none;" class="line-log">'.$lineLog.'</div></span>';
           }
 
-          $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 ORDER BY changed_date DESC LIMIT 1", array(1=>array($line['id'], 'Integer')));
-          if ($line_log_items->fetch() && isset($line_log_items->old_euro_amount)) {
+          $line_log_items = CRM_Core_DAO::executeQuery("SELECT * FROM pum_claim_line_log WHERE claim_line_id = %1 AND changed_by_id = %2 ORDER BY changed_date DESC LIMIT 1", array(1=>array($line['id'], 'Integer'),2=>array($contact_id, 'Integer')));
+
+          if ($line_log_items->fetch() && isset($line_log_items->new_euro_amount)) {
+            $amount_submitted = $line_log_items->new_euro_amount;
+          } else if($line_log_items->fetch() && isset($line_log_items->old_euro_amount)) {
             $amount_submitted = $line_log_items->old_euro_amount;
           }
 
           $lineitemRow = array();
           $lineitemRow[] = $line['expense_date'];
           $lineitemRow[] = $line['expense_type'];
-          $lineitemRow[] = $line['currency'] . ' ' . number_format($line['currency_amount'], 2, '.', '');
+          //$lineitemRow[] = $line['currency'] . ' ' . number_format($line['currency_amount'], 2, '.', '');
           $lineitemRow[] = 'EUR '.number_format($amount_submitted, 2, '.', '');
           $lineitemRow[] = $approved ? $euro_amount : null;
           $lineitemRow[] = $line['description'];
           $lineitemRows[] = $lineitemRow;
 
-          $totalAmount = $totalAmount + ((float) $line['euro_amount']);
+          $totalAmount = $approved ? ($totalAmount + ((float) number_format($line['euro_amount'], 2, '.', ''))):0;
       }
       try {
         $contact = civicrm_api3('Contact', 'getsingle', array('id' => $contact_id));
@@ -557,14 +579,15 @@ function pum_claims_view($claim_id) {
           $form['lines']['table']['#header'] = array(
               'Date',
               'Expense type',
-              'Amount',
+              //'Amount',
               'Amount submitted',
               'Amount approved',
               'Remark',
           );
           $form['lines']['table']['#attributes'] = array('width' => '100%');
           $form['lines']['table']['#rows'] = $lineitemRows;
-          $form['lines']['total']['#markup'] = '<strong>Total: </strong>EUR '.number_format($totalAmount, 2, '.', '');
+          $form['lines']['total_submitted']['#markup'] = '<p><strong>Total Submitted: </strong>EUR '.number_format($totalAmountSubmitted, 2, '.', '').'</p>';
+          $form['lines']['total']['#markup'] = '<p><strong>Total Approved: </strong>EUR '.number_format($totalAmount, 2, '.', '').'</p>';
       }
 
       $form['attachments']['#type'] = 'fieldset';
@@ -1112,6 +1135,7 @@ function pum_claims_line_form_submit($form, &$form_state) {
     $params['currency_id'] = $form_state['values']['currency'];
     $params['currency_amount'] = $form_state['values']['amount'];
     $params['euro_amount'] = $result['euro_amount'];
+    $params['old_euro_amount'] = $result['euro_amount']; //Always override euro amount when user submits new value
 
     $claimline_types = _pum_claims_getClaimLineTypes();
     (int)$key_kmallowance = array_search('KM-allowance', $claimline_types);
@@ -1136,9 +1160,25 @@ function pum_claims_line_form_submit($form, &$form_state) {
       ));
     }
 
+    //Update total amount in claim information table
+    $totalAmount = 0.00;
+    $lines = _pum_claims_getClaimLines($claim_id);
+
+    foreach($lines as $line) {
+      $totalAmount = $totalAmount + ((float) $line['euro_amount']);
+    }
+
+    $update_ci = CRM_Core_DAO::executeQuery(
+      "UPDATE civicrm_value_claiminformation_70 ci SET ci.total_expenses_389 = %1 WHERE ci.entity_id = %2",
+      array(
+        1=>array($totalAmount, 'Integer'),
+        2=>array($claim_id, 'Integer'))
+    );
+
     $params['description'] = $form_state['values']['description'];
     $params['expense_type'] = $form_state['values']['type'];
     $params['exchange_rate'] = $result['exchange_rate'];
+
     try {
       civicrm_api3('ClaimLine', 'create', $params);
     } catch (CiviCRM_API3_Exception $ex) {
