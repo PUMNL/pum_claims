@@ -1049,13 +1049,13 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $form['line']['distance_km']['#type'] = 'textfield';
     $form['line']['distance_km']['#title'] = 'Distance (in kilometers) <span class="form-required" title="This field is required.">*</span>';
     $form['line']['distance_km']['#required'] = false;
-    $form['line']['distance_km']['#default_value'] = $line['distance_km'];
+    $form['line']['distance_km']['#default_value'] = !empty($line['distance_km'])?$line['distance_km']:'';
     $form['line']['distance_km']['#description'] = 'Enter the amount of the note with a dot (.) as decimal seperator, in the respective currency';
 
     $form['line']['cost_center']['#type'] = 'textfield';
     $form['line']['cost_center']['#title'] = 'Cost Center (Optional field, only fill when provided to you by financial department)';
     $form['line']['cost_center']['#required'] = false;
-    $form['line']['cost_center']['#default_value'] = $line['cost_center'];
+    $form['line']['cost_center']['#default_value'] = !empty($line['cost_center'])?$line['cost_center']:'';
     $form['line']['cost_center']['#maxlength'] = 8;
     $form['line']['cost_center']['#description'] = 'Optional field, fill in cost center when provided to you by financial department. Length is always 8 characters.';
 
@@ -1171,7 +1171,7 @@ function pum_claims_line_form_submit($form, &$form_state) {
     $update_ci = CRM_Core_DAO::executeQuery(
       "UPDATE civicrm_value_claiminformation_70 ci SET ci.total_expenses_389 = %1 WHERE ci.entity_id = %2",
       array(
-        1=>array($totalAmount, 'Integer'),
+        1=>array((float)$totalAmount, 'Float'),
         2=>array($claim_id, 'Integer'))
     );
 
