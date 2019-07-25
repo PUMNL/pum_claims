@@ -35,8 +35,16 @@ $handler->display->display_options['header']['area']['field'] = 'area';
 $handler->display->display_options['header']['area']['empty'] = TRUE;
 $handler->display->display_options['header']['area']['content'] = '<?php
 global $language;
+global $user;
 $lang_name = $language->language;
-echo \'<p><a href="/portal/new-claim">Submit a new claim</a>  <a href="\'.variable_get(\'pum_claims_linkmanual_\'.$lang_name, variable_get(\'pum_claims_linkmanual_en\')).\'">Manual claims</a>  <a href="\'.variable_get(\'pum_claims_linkrenumerationpolicy_\'.$lang_name, variable_get(\'pum_claims_linkrenumerationpolicy_en\')).\'">Renumeration Policy</a>\';
+echo \'<p>\';
+echo \'<a href="/portal/new-claim">Submit a new claim</a>\';
+echo \' - <a href="\'.variable_get(\'pum_claims_linkmanual_\'.$lang_name, variable_get(\'pum_claims_linkmanual_en\')).\'" target="_blank">\'.variable_get(\'pum_claims_linkmanual_text_\'.$lang_name, variable_get(\'pum_claims_linkmanual_text_en\')).\'</a>\';
+if (in_array(\'Representative\', $user->roles)){
+  echo \' - <a href="\'.variable_get(\'pum_claims_linkremunerationpolicyreps_en\', variable_get(\'pum_claims_linkremunerationpolicyreps_en\')).\'" target="_blank">\'.variable_get(\'pum_claims_linkremunerationpolicyreps_text_en\', variable_get(\'pum_claims_linkremunerationpolicyreps_text_en\')).\'</a>\';
+} else {
+  echo \' - <a href="\'.variable_get(\'pum_claims_linkremunerationpolicy_\'.$lang_name, variable_get(\'pum_claims_linkremunerationpolicy_en\')).\'" target="_blank">\'.variable_get(\'pum_claims_linkremunerationpolicy_text_\'.$lang_name, variable_get(\'pum_claims_linkremunerationpolicy_text_en\')).\'</a>\';
+}
 ?>';
 $handler->display->display_options['header']['area']['format'] = 'php_code';
 /* Relationship: CiviCRM Activity Contacts: Activity Contact ID */

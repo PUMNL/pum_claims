@@ -25,9 +25,17 @@ function pum_claims_admin_settings($form, &$form_state) {
     '#description' => '',
     '#group' => 'pum_claims_settings',
   );
-  $form['pum_claims_settings_renumerationpolicy'] = array(
+  $form['pum_claims_settings_remunerationpolicy'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Renumeration Policy'),
+    '#title' => t('remuneration Policy'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => '',
+    '#group' => 'pum_claims_settings',
+  );
+  $form['pum_claims_settings_remunerationpolicy_reps'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('remuneration Policy Representative'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#description' => '',
@@ -57,30 +65,44 @@ function pum_claims_admin_settings($form, &$form_state) {
     '#default_value' => variable_get('pum_claims_linkmanual_nl', NULL),
     '#description' => t('Enter the relative URL to the dutch manual for claims.'),
   );
-  $form['pum_claims_settings_renumerationpolicy']['pum_claims_linkrenumerationpolicy_text_en'] = array(
+  $form['pum_claims_settings_remunerationpolicy']['pum_claims_linkremunerationpolicy_text_en'] = array(
     '#type' => 'textfield',
-    '#title' => t('Text description for link to enlish renumeration policy'),
-    '#default_value' => variable_get('pum_claims_linkrenumerationpolicy_text_en', NULL),
-    '#description' => t('Enter the text description for link to enlish renumeration policy.'),
+    '#title' => t('Text description for link to enlish remuneration policy'),
+    '#default_value' => variable_get('pum_claims_linkremunerationpolicy_text_en', NULL),
+    '#description' => t('Enter the text description for link to enlish remuneration policy.'),
   );
-  $form['pum_claims_settings_renumerationpolicy']['pum_claims_linkrenumerationpolicy_en'] = array(
+  $form['pum_claims_settings_remunerationpolicy']['pum_claims_linkremunerationpolicy_en'] = array(
     '#type' => 'textfield',
-    '#title' => t('Link to enlish renumeration policy'),
-    '#default_value' => variable_get('pum_claims_linkrenumerationpolicy_en', NULL),
-    '#description' => t('Enter the relative URL to the english renumeration policy for claims.'),
+    '#title' => t('Link to enlish remuneration policy'),
+    '#default_value' => variable_get('pum_claims_linkremunerationpolicy_en', NULL),
+    '#description' => t('Enter the relative URL to the english remuneration policy for claims.'),
   );
-  $form['pum_claims_settings_renumerationpolicy']['pum_claims_linkrenumerationpolicy_text_nl'] = array(
+  $form['pum_claims_settings_remunerationpolicy']['pum_claims_linkremunerationpolicy_text_nl'] = array(
     '#type' => 'textfield',
-    '#title' => t('Text description for link to dutch renumeration policy'),
-    '#default_value' => variable_get('pum_claims_linkrenumerationpolicy_text_nl', NULL),
-    '#description' => t('Enter the text description for link to dutch renumeration policy.'),
+    '#title' => t('Text description for link to dutch remuneration policy'),
+    '#default_value' => variable_get('pum_claims_linkremunerationpolicy_text_nl', NULL),
+    '#description' => t('Enter the text description for link to dutch remuneration policy.'),
   );
-  $form['pum_claims_settings_renumerationpolicy']['pum_claims_linkrenumerationpolicy_nl'] = array(
+  $form['pum_claims_settings_remunerationpolicy']['pum_claims_linkremunerationpolicy_nl'] = array(
     '#type' => 'textfield',
-    '#title' => t('Link to dutch renumeration policy'),
-    '#default_value' => variable_get('pum_claims_linkrenumerationpolicy_nl', NULL),
-    '#description' => t('Enter the relative URL to the dutch renumeration policy for claims.'),
+    '#title' => t('Link to dutch remuneration policy'),
+    '#default_value' => variable_get('pum_claims_linkremunerationpolicy_nl', NULL),
+    '#description' => t('Enter the relative URL to the dutch remuneration policy for claims.'),
   );
+
+  $form['pum_claims_settings_remunerationpolicy_reps']['pum_claims_linkremunerationpolicyreps_text_en'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Text description for link to enlish remuneration policy for representatives'),
+    '#default_value' => variable_get('pum_claims_linkremunerationpolicyreps_text_en', NULL),
+    '#description' => t('Enter the text description for link to enlish remuneration policy.'),
+  );
+  $form['pum_claims_settings_remunerationpolicy_reps']['pum_claims_linkremunerationpolicyreps_en'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Link to enlish remuneration policy for representatives'),
+    '#default_value' => variable_get('pum_claims_linkremunerationpolicyreps_en', NULL),
+    '#description' => t('Enter the relative URL to the english remuneration policy for claims.'),
+  );
+
 
   return system_settings_form($form);
 }

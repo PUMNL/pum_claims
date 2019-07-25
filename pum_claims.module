@@ -347,6 +347,21 @@ function pum_claims_form($form, &$form_state) {
     $form['about_me']['bank_name']['#markup'] = '<p><strong>Bank name:</strong> '. $bankDetails['bank'] . '</p>';
     $form['about_me']['bic']['#markup'] = '<p><strong>BIC: </strong> ' . $bankDetails['bic'] . '</p>';
     $form['about_me']['iban']['#markup'] = '<p><strong>Bank Account Number: </strong> ' . (!empty($bankDetails['iban']) ? $bankDetails['iban'] : (!empty($bankDetails['bank_account_number']) ? $bankDetails['bank_account_number']:'')).'</p>';
+
+    global $language;
+    $lang_name = $language->language;
+
+    $form['about_me']['claims_manual']['#markup'] = '<p><strong>Claims manual: </strong>';
+
+    $form['about_me']['claims_manual']['#markup'] .= '<u><a href="'.variable_get('pum_claims_linkmanual_'.$lang_name, variable_get('pum_claims_linkmanual_en')).'" target="_blank">'.variable_get('pum_claims_linkmanual_text_'.$lang_name, variable_get('pum_claims_linkmanual_text_en')).'</a></u>';
+
+    if (in_array('Representative', $user->roles)){
+      $form['about_me']['claims_manual']['#markup'] .= ' - <u><a href="'.variable_get('pum_claims_linkremunerationpolicyreps_en', variable_get('pum_claims_linkremunerationpolicyreps_en')).'" target="_blank">'.variable_get('pum_claims_linkremunerationpolicyreps_text_en', variable_get('pum_claims_linkremunerationpolicyreps_text_en')).'</a></u>';
+    } else {
+      $form['about_me']['claims_manual']['#markup'] .= ' - <u><a href="'.variable_get('pum_claims_linkremunerationpolicy_'.$lang_name, variable_get('pum_claims_linkremunerationpolicy_en')).'" target="_blank">'.variable_get('pum_claims_linkremunerationpolicy_text_'.$lang_name, variable_get('pum_claims_linkremunerationpolicy_text_en')).'</a></u>';
+    }
+    $form['about_me']['claims_manual']['#markup'] .= '</p>';
+
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim Role';
     $form['about_me']['type']['#required'] = true;
@@ -691,7 +706,15 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
     global $language;
     $lang_name = $language->language;
 
-    $form['about_me']['claims_manual']['#markup'] = '<p><strong>Claims manual: </strong> <u><a href="'.variable_get('pum_claims_linkmanual_'.$lang_name, variable_get('pum_claims_linkmanual_en')).'" target="_blank">'.variable_get('pum_claims_linkmanual_text_'.$lang_name, variable_get('pum_claims_linkmanual_text_en')).'</a></u> - <u><a href="'.variable_get('pum_claims_linkrenumerationpolicy_'.$lang_name, variable_get('pum_claims_linkrenumerationpolicy_en')).'" target="_blank">'.variable_get('pum_claims_linkrenumerationpolicy_text_'.$lang_name, variable_get('pum_claims_linkrenumerationpolicy_text_en')).'</a></u></p>';
+    $form['about_me']['claims_manual']['#markup'] = '<p><strong>Claims manual: </strong>';
+
+    $form['about_me']['claims_manual']['#markup'] .= '<u><a href="'.variable_get('pum_claims_linkmanual_'.$lang_name, variable_get('pum_claims_linkmanual_en')).'" target="_blank">'.variable_get('pum_claims_linkmanual_text_'.$lang_name, variable_get('pum_claims_linkmanual_text_en')).'</a></u>';
+    if (in_array('Representative', $user->roles)){
+      $form['about_me']['claims_manual']['#markup'] .= ' - <u><a href="'.variable_get('pum_claims_linkremunerationpolicyreps_en', variable_get('pum_claims_linkremunerationpolicyreps_en')).'" target="_blank">'.variable_get('pum_claims_linkremunerationpolicyreps_text_en', variable_get('pum_claims_linkremunerationpolicyreps_text_en')).'</a></u>';
+    } else {
+      $form['about_me']['claims_manual']['#markup'] .= ' - <u><a href="'.variable_get('pum_claims_linkremunerationpolicy_'.$lang_name, variable_get('pum_claims_linkremunerationpolicy_en')).'" target="_blank">'.variable_get('pum_claims_linkremunerationpolicy_text_'.$lang_name, variable_get('pum_claims_linkremunerationpolicy_text_en')).'</a></u>';
+    }
+    $form['about_me']['claims_manual']['#markup'] .= '</p>';
     $form['about_me']['type']['#type'] = 'select';
     $form['about_me']['type']['#title'] = 'Claim Role';
     $form['about_me']['type']['#required'] = true;
@@ -823,7 +846,7 @@ function pum_claims_edit_form_submit_save($form, &$form_state) {
     $params['expense_date'] = $expenseDate->format("Ymd");
     $params['claim_type'] = $form_state['values']['type'];
     $params['claim_contact_id'] = $contact_id;
-    /* only a project and represenative needs a claim link */
+    /* only a project and representative needs a claim link */
     if($params['claim_type']=='project' | $params['claim_type']=='representative') {
       $params['claim_link'] = $form_state['values']['link'];
     }
@@ -954,6 +977,7 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     }
     civicrm_initialize();
     global $language;
+    global $user;
     drupal_add_js(
       array(
         'pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'),
@@ -963,11 +987,14 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
                               'pum_claims_linkmanual_en' => variable_get('pum_claims_linkmanual_en'),
                               'pum_claims_linkmanual_text_nl' => variable_get('pum_claims_linkmanual_text_nl'),
                               'pum_claims_linkmanual_nl' => variable_get('pum_claims_linkmanual_nl'),
-                              'pum_claims_linkrenumerationpolicy_text_en' => variable_get('pum_claims_linkrenumerationpolicy_text_en'),
-                              'pum_claims_linkrenumerationpolicy_en' => variable_get('pum_claims_linkrenumerationpolicy_en'),
-                              'pum_claims_linkrenumerationpolicy_text_nl' => variable_get('pum_claims_linkrenumerationpolicy_text_nl'),
-                              'pum_claims_linkrenumerationpolicy_nl' => variable_get('pum_claims_linkrenumerationpolicy_nl'),
-                              'site_language' => $language->language
+                              'pum_claims_linkremunerationpolicy_text_en' => variable_get('pum_claims_linkremunerationpolicy_text_en'),
+                              'pum_claims_linkremunerationpolicy_en' => variable_get('pum_claims_linkremunerationpolicy_en'),
+                              'pum_claims_linkremunerationpolicy_text_nl' => variable_get('pum_claims_linkremunerationpolicy_text_nl'),
+                              'pum_claims_linkremunerationpolicy_nl' => variable_get('pum_claims_linkremunerationpolicy_nl'),
+                              'pum_claims_linkremunerationpolicyreps_text_en' => variable_get('pum_claims_linkremunerationpolicyreps_text_en'),
+                              'pum_claims_linkremunerationpolicyreps_en' => variable_get('pum_claims_linkremunerationpolicyreps_en'),
+                              'site_language' => $language->language,
+                              'user' => $user,
                         )
       ), 'setting'
     );
@@ -1010,7 +1037,13 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     $lang_name = $language->language;
 
     $form['line']['#type'] = 'fieldset';
-    $form['line']['claims_remunerationpolicy']['#markup'] = '<a href="#" id="remuneration_policy">'.variable_get('pum_claims_linkrenumerationpolicy_text_'.$lang_name, variable_get('pum_claims_linkrenumerationpolicy_text_en')).'</a>';
+
+    if (in_array('Representative', $user->roles)){
+      $form['line']['claims_remunerationpolicy']['#markup'] = '<a href="#" id="remuneration_policy">'.variable_get('pum_claims_linkremunerationpolicyreps_text_en').'</a>';
+    } else {
+      $form['line']['claims_remunerationpolicy']['#markup'] = '<a href="#" id="remuneration_policy">'.variable_get('pum_claims_linkremunerationpolicy_text_'.$lang_name, variable_get('pum_claims_linkremunerationpolicy_text_en')).'</a>';
+    }
+
     $form['line']['expense_date']['#type'] = 'date_popup';
     $form['line']['expense_date']['#title'] = 'Date expense incurred';
     $form['line']['expense_date']['#date_label_position'] = 'before';

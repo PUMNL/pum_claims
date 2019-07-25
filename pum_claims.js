@@ -73,10 +73,22 @@
 
             $('#remuneration_policy').click(function(){
               var win = '';
-              if(Drupal.settings.pum_claims.site_language == 'en' | Drupal.settings.pum_claims.site_language == 'fr' | Drupal.settings.pum_claims.site_language == 'es' | Drupal.settings.pum_claims.site_language == 'ar' | Drupal.settings.pum_claims.site_language == 'ru'){
-                win = window.open(Drupal.settings.pum_claims.pum_claims_linkrenumerationpolicy_en, '_blank');
+              var rep_found = false;
+
+              for (var role in Drupal.settings.pum_claims.user.roles) {
+                if(Drupal.settings.pum_claims.user.roles[role] == 'Representative'){
+                    rep_found = true;
+                }
+              }
+
+              if (rep_found == true){
+                win = window.open(Drupal.settings.pum_claims.pum_claims_linkremunerationpolicyreps_en, '_blank');
+              } else if(Drupal.settings.pum_claims.site_language == 'en' | Drupal.settings.pum_claims.site_language == 'fr' | Drupal.settings.pum_claims.site_language == 'es' | Drupal.settings.pum_claims.site_language == 'ar' | Drupal.settings.pum_claims.site_language == 'ru'){
+                win = window.open(Drupal.settings.pum_claims.pum_claims_linkremunerationpolicy_en, '_blank');
               } else if(Drupal.settings.pum_claims.site_language == 'nl'){
-                win = window.open(Drupal.settings.pum_claims.pum_claims_linkrenumerationpolicy_nl, '_blank');
+                win = window.open(Drupal.settings.pum_claims.pum_claims_linkremunerationpolicy_nl, '_blank');
+              } else {
+                win = window.open(Drupal.settings.pum_claims.pum_claims_linkremunerationpolicy_en, '_blank');
               }
               if (win) {
                   //Browser has allowed it to be opened
