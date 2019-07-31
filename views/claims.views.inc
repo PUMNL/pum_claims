@@ -67,13 +67,13 @@ $handler->display->display_options['fields']['id']['field'] = 'id';
 $handler->display->display_options['fields']['id']['label'] = 'Claim ID';
 $handler->display->display_options['fields']['id']['separator'] = '';
 /* Field: Hidden: CiviCRM Custom: Claiminformation: Claim Status */
-$handler->display->display_options['fields']['status']['id'] = 'status';
-$handler->display->display_options['fields']['status']['table'] = $claimInformationCustomGroup['table_name'];
-$handler->display->display_options['fields']['status']['field'] = $claimStatusCustomField['column_name'];
-$handler->display->display_options['fields']['status']['ui_name'] = 'Hidden: CiviCRM Custom: Claiminformation: Claim Status';
-$handler->display->display_options['fields']['status']['exclude'] = TRUE;
-$handler->display->display_options['fields']['status']['alter']['nl2br'] = TRUE;
-$handler->display->display_options['fields']['status']['alter']['strip_tags'] = TRUE;
+$handler->display->display_options['fields']['pum_claim_status']['id'] = 'pum_claim_status';
+$handler->display->display_options['fields']['pum_claim_status']['table'] = $claimInformationCustomGroup['table_name'];
+$handler->display->display_options['fields']['pum_claim_status']['field'] = $claimStatusCustomField['column_name'];
+$handler->display->display_options['fields']['pum_claim_status']['ui_name'] = 'Hidden: CiviCRM Custom: Claiminformation: Claim Status';
+$handler->display->display_options['fields']['pum_claim_status']['exclude'] = TRUE;
+$handler->display->display_options['fields']['pum_claim_status']['alter']['nl2br'] = TRUE;
+$handler->display->display_options['fields']['pum_claim_status']['alter']['strip_tags'] = TRUE;
 /* Field: PHP: CiviCRM Custom: Claiminformation: Claim Status */
 $handler->display->display_options['fields']['php_2']['id'] = 'php_2';
 $handler->display->display_options['fields']['php_2']['table'] = 'views';

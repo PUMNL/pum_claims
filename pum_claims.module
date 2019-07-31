@@ -1,7 +1,11 @@
 <?php
 
 function pum_claims_get_roles_who_can_access() {
-    return array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Prof', 'Representative');
+    return array('Expert', 'Sector Coordinator', 'Country Coordinator', 'Representative', 'Grant Coordinator', 'Recruitment Team Member');
+}
+
+function pum_claims_get_roles_who_can_access_expenseform() {
+    return array('administrator', 'Anamon', 'Business Development', 'Finance', 'Finance Admin', 'Gebruikers Vertegenwoordiger', 'IT', 'P&O', 'PR', 'Prof', 'PUM Management', 'Secretariat', 'SSO');
 }
 
 function pum_claims_menu() {
