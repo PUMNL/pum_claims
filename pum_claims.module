@@ -1126,7 +1126,7 @@ function pum_claims_line_form_validate($form, &$form_state) {
         $form_state['values']['distance_km'] = NULL;
       }
       if((int)$form_state['values']['type'] == (int)$key_kmallowance && (empty($form_state['values']['distance_km']) | $form_state['values']['distance_km'] < 0)) {
-        form_set_error('distance_km', 'Distance should be a positive value');
+        form_set_error('distance_km', 'Distance should be a numeric value, make sure there are no spaces or letters in this field.');
       }
 
       $expense_date = new DateTime($form_state['values']['expense_date']);

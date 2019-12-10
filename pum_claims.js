@@ -98,6 +98,27 @@
                   //alert('Please allow popups for this website');
               }
             });
+
+            $('#pum-claims-line-form #edit-distance-km').keypress(function (e) {
+              var allowedChars = '0123456789';
+              function contains(stringValue, charValue) {
+                  return stringValue.indexOf(charValue) > -1;
+              }
+              var invalidKey = e.key.length === 1 && !contains(allowedChars, e.key) || e.key === '.' && contains(e.target.value, '.');
+              if(invalidKey) {
+                e.preventDefault();
+              }
+            });
+            $('#pum-claims-line-form #edit-amount').keypress(function (e) {
+              var allowedChars = '0123456789.';
+              function contains(stringValue, charValue) {
+                  return stringValue.indexOf(charValue) > -1;
+              }
+              var invalidKey = e.key.length === 1 && !contains(allowedChars, e.key) || e.key === '.' && contains(e.target.value, '.');
+              if(invalidKey) {
+                e.preventDefault();
+              }
+            });
         }
     };
 
