@@ -41,6 +41,15 @@ function pum_claims_admin_settings($form, &$form_state) {
     '#description' => '',
     '#group' => 'pum_claims_settings',
   );
+
+  $form['pum_claims']['pum_claims_kmallowance'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Amount for KM Allowance'),
+    '#default_value' => variable_get('pum_claims_kmallowance', NULL),
+    '#description' => t('Enter the amount per km.'),
+    '#group' => 'pum_claims_settings',
+  );
+
   $form['pum_claims_settings_manual']['pum_claims_linkmanual_text_en'] = array(
     '#type' => 'textfield',
     '#title' => t('Text description for link to english manual'),

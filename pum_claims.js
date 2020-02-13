@@ -53,8 +53,15 @@
                 //#3946: Show distance field when KM-allowance is selected
                 if($('#pum-claims-line-form #edit-type').val() == Drupal.settings.pum_claims.km_allowance) {
                   $('.form-item-distance-km').show();
+                  $('.form-item-currency').hide();
+                  $('.form-item-amount').hide();
+                  $('#edit-amount').val(0.00);
                 } else {
                   $('.form-item-distance-km').hide();
+                  $('.form-item-currency').show();
+                  $('.form-item-amount').show();
+                  $('#edit-amount').val('');
+                  $('#euro-amount').val(0.00);
                 }
 
                 //#3820: Show description when claim line type is selected
@@ -69,6 +76,20 @@
                       $('#pum-claims-line-form #expense_type_description').css('background-color','#E5DEFF');
                     }
                 });
+              }).change();
+
+            $('#pum-claims-line-form #edit-distance-km')
+              .change(function() {
+                var distance_km = $('#edit-distance-km').val();
+                var per_km_allowance = Drupal.settings.pum_claims.pum_claims_kmallowance
+                var kmamount = per_km_allowance * distance_km;
+                var eur_currency = Drupal.settings.pum_claims.eur_currency;
+
+                if(kmamount != '' && eur_currency != ''){
+                  $('#edit-currency').val(eur_currency);
+                  $('#edit-amount').text(parseFloat(kmamount).toFixed(2));
+                  $('#euro-amount').text(parseFloat(kmamount).toFixed(2));
+                }
               }).change();
 
             $('#remuneration_policy').click(function(){
