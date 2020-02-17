@@ -358,7 +358,7 @@ function pum_claims_form($form, &$form_state) {
         $strBirthDate = $dateBirthDate->format('Y-m-d');
     }
 
-    $claim_types = _pum_claims_getClaimTypes();
+    $claim_types = _pum_claims_getClaimTypes($contact_id);
     $link_options = _pum_claims_getClaimLinksForContact($contact_id, FALSE); //FALSE: Completed links should not be visible in submit new claim screen
 
     if(empty( $link_options)) {
@@ -592,7 +592,7 @@ function pum_claims_view($claim_id) {
           $strBirthDate = $dateBirthDate->format('Y-m-d');
       }
 
-      $claim_types = _pum_claims_getClaimTypes();
+      $claim_types = _pum_claims_getClaimTypes($contact_id);
       $link_options = _pum_claims_getClaimLinksForContact($contact_id, TRUE); //TRUE: Completed links should be visible in view claim screen
 
       if(empty($link_options)){
@@ -717,7 +717,7 @@ function pum_claims_edit_form($form, &$form_state, $claim_id) {
         $strBirthDate = $dateBirthDate->format('Y-m-d');
     }
 
-    $claim_types = _pum_claims_getClaimTypes();
+    $claim_types = _pum_claims_getClaimTypes($contact_id);
     $link_options = _pum_claims_getClaimLinksForContact($contact_id, FALSE); //FALSE: Completed links should not be visible in edit new claim screen
     if(empty($link_options)){
        unset($claim_types['project']);
@@ -1387,13 +1387,29 @@ function _pum_claims_getClaimLineTypes() {
     return $types;
 }
 
-function _pum_claims_getClaimTypes() {
+function _pum_claims_getClaimTypes($contact_id='') {
     $types = array();
+    $program_managers_allowed = FALSE;
 
-    $result = civicrm_api3('OptionValue', 'get', array('option_group_id' => 'pum_claim_type', 'option.limit' => 0));
-    foreach($result['values'] as $value) {
+    $api_claimtypes = civicrm_api3('OptionValue', 'get', array('option_group_id' => 'pum_claim_type', 'option.limit' => 0));
+    foreach($api_claimtypes['values'] as $value) {
         $types[$value['value']] = $value['label'];
     }
+
+    $api_groups = civicrm_api3('GroupContact', 'get', array('contact_id' => $contact_id));
+    foreach($api_groups['values'] as $key => $value) {
+      if($value['title'] == 'Programme Managers') {
+        $program_managers_allowed = TRUE;
+      }
+    }
+    if($program_managers_allowed == FALSE) {
+      foreach($types as $key => $value) {
+        if($value == 'Programma-Manager (PM)') {
+          unset($types[$key]);
+        }
+      }
+    }
+
     return $types;
 }
 
