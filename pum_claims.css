@@ -60,16 +60,22 @@
 #pum-claims-line-form #expense_type_description {
   padding: 5px;
 }
-#pum-claims-remark {
+#pum-claims-edit-form #edit-lines {
+  position: relative;
+}
+
+#pum-claims-edit-form #edit-lines #pum-claims-remark {
   background-color:#F57B20;
   color:#483493;
-  height:auto;
-  min-height:50px;
   padding:10px 10px 10px 10px;
   margin-bottom: 10px;
 }
+#pum-claims-edit-form fieldset {
+  min-width: 0;
+}
 #pum-claims-remark #pum-claims-remark-description {
   color: #FFFFFF;
+  word-wrap: break-word;
 }
 span.helpbutton {
   background-color:inherit;
