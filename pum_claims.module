@@ -1013,8 +1013,8 @@ function pum_claims_line_form($form, &$form_state, $claim_id, $line_id=false) {
     drupal_add_js(
       array(
         'pum_claims' => array('currencyConvertUrl' => url('portal/claims/convert_currency'),
-                              'km_allowance' => civicrm_api('OptionValue', 'getvalue', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type', 'label' => 'KM-allowance', 'return' => 'value')),
-                              'pum_claims_kmallowance' => variable_get('pum_claims_kmallowance', NULL),
+                              'pum_claims_kmallowance_linetype' => civicrm_api('OptionValue', 'getvalue', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type', 'label' => 'KM-allowance', 'return' => 'value')),
+                              'pum_claims_kmallowance_amount' => variable_get('pum_claims_kmallowance', NULL),
                               'eur_currency' => civicrm_api('Currency', 'getvalue', array('version' => 3, 'sequential' => 1, 'name' => 'EUR', 'return' => 'id')),
                               'claim_type_description' => civicrm_api('OptionValue', 'get', array('version' => 3, 'sequential' => 1, 'option_group_name' => 'pum_claim_line_type')),
                               'pum_claims_linkmanual_text_en' => variable_get('pum_claims_linkmanual_text_en'),

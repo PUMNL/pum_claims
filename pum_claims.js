@@ -4,8 +4,8 @@
         var amount = parseFloat($('#edit-amount').val());
         var expense_date = $('#edit-expense-date-datepicker-popup-0').val();
         $('#euro_amount').html('0.00');
-        if (currency_id > 0 && amount != NaN && expense_date.length > 0) {
 
+        if (currency_id > 0 && amount != NaN && expense_date.length > 0) {
             $.ajax({
                 url: Drupal.settings.pum_claims.currencyConvertUrl,
                 method: "GET",
@@ -25,9 +25,15 @@
 
     Drupal.behaviors.claims = {
         attach: function (context, settings) {
-            $('#edit-expense-date-datepicker-popup-0', context).change(pum_claims_convert_currency);
-            $('#edit-currency', context).change(pum_claims_convert_currency);
-            $('#edit-amount', context).change(pum_claims_convert_currency);
+            //Do not use currency service on KM allowance
+            if($('#pum-claims-line-form #edit-type')){
+              if ($('#pum-claims-line-form #edit-type').val() != Drupal.settings.pum_claims.pum_claims_kmallowance_linetype) {
+                $('#edit-expense-date-datepicker-popup-0', context).change(pum_claims_convert_currency);
+                $('#edit-currency', context).change(pum_claims_convert_currency);
+                $('#edit-amount', context).change(pum_claims_convert_currency);
+              }
+            }
+
             $('.line-amount-eur').hover(
                 function() {
                     jQuery(this).children('.line-log').css('display', '');
@@ -51,17 +57,41 @@
             $('#pum-claims-line-form #edit-type')
               .change(function() {
                 //#3946: Show distance field when KM-allowance is selected
-                if($('#pum-claims-line-form #edit-type').val() == Drupal.settings.pum_claims.km_allowance) {
+                var per_km_allowance = Drupal.settings.pum_claims.pum_claims_kmallowance_amount;
+
+                if($('#pum-claims-line-form #edit-type').val() == Drupal.settings.pum_claims.pum_claims_kmallowance_linetype) {
                   $('.form-item-distance-km').show();
                   $('.form-item-currency').hide();
                   $('.form-item-amount').hide();
-                  $('#edit-amount').val(0.00);
+                  $('#edit-amount').val(parseFloat(0.00).toFixed(2));
+
+                  //Recalculate Amount
+                  var distance_km = $('#edit-distance-km').val();
+                  var kmamount = per_km_allowance * distance_km;
+                  var eur_currency = Drupal.settings.pum_claims.eur_currency;
+
+                  if(kmamount != '' && eur_currency != ''){
+                    $('#edit-currency').val(eur_currency);
+                    $('#edit-amount').text(parseFloat(kmamount).toFixed(2));
+                    $('#euro-amount').text(parseFloat(kmamount).toFixed(2));
+                  } else {
+                    $('#edit-currency').val(eur_currency);
+                    if(isNaN(parseFloat($('#edit-amount').val()).toFixed(2))){
+                      $('#euro-amount').text(parseFloat(0.00).toFixed(2));
+                    } else {
+                      $('#euro-amount').text(parseFloat($('#edit-amount').val()).toFixed(2));
+                    }
+                  }
                 } else {
                   $('.form-item-distance-km').hide();
                   $('.form-item-currency').show();
                   $('.form-item-amount').show();
-                  $('#edit-amount').val('');
-                  $('#euro-amount').val(0.00);
+                  $('#edit-distance-km').val(0);
+                  if(isNaN(parseFloat($('#edit-amount').val()).toFixed(2))){
+                    $('#euro-amount').text(parseFloat(0.00).toFixed(2));
+                  } else {
+                    $('#euro-amount').text(parseFloat($('#edit-amount').val()).toFixed(2));
+                  }
                 }
 
                 //#3820: Show description when claim line type is selected
@@ -81,7 +111,7 @@
             $('#pum-claims-line-form #edit-distance-km')
               .change(function() {
                 var distance_km = $('#edit-distance-km').val();
-                var per_km_allowance = Drupal.settings.pum_claims.pum_claims_kmallowance
+                var per_km_allowance = Drupal.settings.pum_claims.pum_claims_kmallowance_amount
                 var kmamount = per_km_allowance * distance_km;
                 var eur_currency = Drupal.settings.pum_claims.eur_currency;
 
