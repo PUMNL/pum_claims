@@ -220,11 +220,11 @@ function pum_claims_is_claim_editable($claim_id) {
                                           ORDER BY act.activity_date_time DESC", $sqlParams);
 
     //As from July 31, 2017 claims are handled different, so that's why we have an old status (for old claims) and new status (for new claims)
-    if ($claims->fetch() && (!empty($claims->status_old_claims) | !empty($claims->status_new_claims))) {
+    if ($claims->fetch() && (!empty($claims->status_old_claims) || !empty($claims->status_new_claims))) {
       if($claims->status_old_claims == 'Scheduled' && $claims->status_new_claims == NULL && $claims->approval_contact_id == NULL) {
         //Old claim which is not submitted, so claim should be editable
         return TRUE;
-      } elseif(($claims->status_old_claims == 'Scheduled'|$claims->status_old_claims == 'Completed') && $claims->approval_contact_id == NULL) {
+      } elseif(($claims->status_old_claims == 'Scheduled' || $claims->status_old_claims == 'Completed') && $claims->approval_contact_id == NULL) {
         //New claim which is not submitted, so claim should be editable
         return TRUE;
       } else if($claims->status_new_claims == 'Waiting For Correction') {
@@ -446,7 +446,7 @@ function pum_claims_form_submit($form, &$form_state) {
     try {
       $result = civicrm_api3('Claim', 'create', $params);
     } catch (CiviCRM_API3_Exception $ex) {
-      //watchdog(basename(__FILE__), '<pre>@print_r</pre>', array('@print_r', print_r( $ex, TRUE)), WATCHDOG_ERROR,'');
+      watchdog(basename(__FILE__), print_r($ex,TRUE), array(), WATCHDOG_ERROR,'');
     }
     $claim_id = $result['values']['id'];
     drupal_goto('portal/claims/'.$claim_id, array('fragment' => 'edit-lines'));
